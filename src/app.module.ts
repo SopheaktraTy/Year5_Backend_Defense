@@ -15,12 +15,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule], // Import ConfigModule so we can use ConfigService
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: +configService.get('DB_PORT'), // or another port if necessary
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        host: 'localhost',
+        port: 5432, // or another port if necessary #plus mean interger
+        username: 'postgres',
+        password: 'root',
+        database: 'Pheaktra',
+        entities: [],
         synchronize: true, // Set to false in production!
       }),
       inject: [ConfigService], // Inject the ConfigService to get config values
