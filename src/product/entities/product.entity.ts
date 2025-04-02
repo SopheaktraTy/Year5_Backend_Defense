@@ -1,16 +1,19 @@
-import{ Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity({name: 'product'})
+@Entity()
 export class Product {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn('uuid') //uuid auto gen id
+  id: number;
 
-    @Column({ unique: true})
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({type: 'text', nullable: true})
-    description: string;
+  @Column('decimal', { precision: 10, scale: 2 })
+  price: number;
 
-    @Column({type: 'boolean', default: true})
-    active: boolean;
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ default: true })
+  isActive: boolean;
 }

@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ProductModule } from './product/product.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ProductModule } from './product/product.module';
+import { Product } from './product/entities/product.entity';
 
 @Module({
   imports: [
@@ -18,16 +19,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         host: 'localhost',
         port: 5432, // or another port if necessary #plus mean interger
         username: 'postgres',
-        password: 'root',
+        password: 'Pheaktra123',
         database: 'Pheaktra',
-        entities: [],
+        entities: [Product],
         synchronize: true, // Set to false in production!
       }),
       inject: [ConfigService], // Inject the ConfigService to get config values
     }),
 
+
+
+
     // Other modules you need
     ProductModule,
+
+
+
   ],
   controllers: [],
   providers: [],
