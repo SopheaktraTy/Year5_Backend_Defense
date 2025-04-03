@@ -1,0 +1,15 @@
+npm run start:dev
+
+#install library swagger
+npm i @nestjs/swagger
+
+#install library typeorm
+npm i @nestjs/typeorm
+
+#install class-validator (DTO)
+npm i class-validator --save
+
+#install class-transformer (DTO)
+npm install class-transformer
+
+
