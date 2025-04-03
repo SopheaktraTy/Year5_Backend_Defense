@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductModule } from './product/product.module';
-import { Product } from './product/entities/product.entity';
-
+import { Products } from './product/entities/products.entity';
+import { Product_Size } from './product/entities/products-size.entity';
 @Module({
   imports: [
     // Load configuration settings from .env or other config source
@@ -21,7 +21,7 @@ import { Product } from './product/entities/product.entity';
         username: 'postgres',
         password: 'Pheaktra123',
         database: 'Pheaktra',
-        entities: [Product],
+        entities: [Products, Product_Size],
         synchronize: true, // Set to false in production!
       }),
       inject: [ConfigService], // Inject the ConfigService to get config values
