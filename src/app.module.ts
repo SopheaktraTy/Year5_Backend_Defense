@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ProductModule } from './product/product.module';
-import { Products } from './product/entities/products.entity';
-import { Product_Size } from './product/entities/products-size.entity';
+import { ProductModule } from './products/product.module';
+import { ProductSizeModule } from './products_size/product_size.module';
+import { Products } from './products/entities/products.entity';
+import { Product_Size } from './products_size/entities/product_size.entity';
+
 @Module({
   imports: [
     // Load configuration settings from .env or other config source
@@ -32,6 +34,7 @@ import { Product_Size } from './product/entities/products-size.entity';
 
     // Other modules you need
     ProductModule,
+    ProductSizeModule,
 
 
 
