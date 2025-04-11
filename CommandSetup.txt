@@ -12,4 +12,7 @@ npm i class-validator --save
 #install class-transformer (DTO)
 npm install class-transformer
 
+#Auto generate folder with crud
+nest g res <foldername>
+
 

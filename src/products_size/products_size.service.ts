@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateProductSizeDto } from './dto/create-products-size.dto';
-import { UpdateProductSizeDto } from './dto/update-products-size.dto';
+import { CreateProductsSizeDto } from './dto/create-products-size.dto';
+import { UpdateProductsSizeDto } from './dto/update-products-size.dto';
 
 @Injectable()
 export class ProductSizeService {
-  create(createProductSizeDto: CreateProductSizeDto) {
+  create(createProductSizeDto: CreateProductsSizeDto) {
     return 'This action adds a new productSize';
   }
 
@@ -16,7 +16,7 @@ export class ProductSizeService {
     return `This action returns a #${id} productSize`;
   }
 
-  update(id: number, updateProductSizeDto: UpdateProductSizeDto) {
+  update(id: number, updateProductSizeDto: UpdateProductsSizeDto) {
     return `This action updates a #${id} productSize`;
   }
 

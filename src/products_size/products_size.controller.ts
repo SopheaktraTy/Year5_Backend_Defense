@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProductSizeService } from './products_size.service';
-import { CreateProductSizeDto } from './dto/create-products-size.dto';
-import { UpdateProductSizeDto } from './dto/update-products-size.dto';
+import { CreateProductsSizeDto } from './dto/create-products-size.dto';
+import { UpdateProductsSizeDto } from './dto/update-products-size.dto';
 
 @Controller('product-size')
 export class ProductSizeController {
