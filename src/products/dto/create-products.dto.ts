@@ -1,29 +1,42 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsInt, IsArray, ValidateNested } from 'class-validator';
+import {IsNotEmpty, IsOptional, IsString, IsUUID, IsNumber, IsArray, ValidateNested} from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateProductsSizeDto } from '../../products_size/dto/create-products-size.dto';  // Correct import
-  // Make sure to import the new DTO for ProductSize
+import { CreateProductsSizeDto } from '../../products_size/dto/create-products-size.dto';
 
 export class CreateProductDto {
+  @IsNotEmpty()
+  @IsUUID()
+  category_id?: string;
 
-    @IsNotEmpty()
-    @IsString()
-    name: string;
+  @IsOptional()
+  @IsUUID()
+  user_id?: string;
 
-    @IsNotEmpty()
-    @IsNumber()
-    originalPrice: number;
+  @IsNotEmpty()
+  @IsString()
+  title: string;
 
-    @IsOptional()
-    @IsNumber()
-    salePrice: number;
+  @IsOptional()
+  @IsString()
+  picture?: string;
 
-    @IsOptional()
-    @IsString()
-    description: string;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateProductsSizeDto)  // Transform and validate each element as ProductSizeDto
-    sizes: CreateProductsSizeDto[];  // Array of ProductSizeDto to handle multiple sizes
+  @IsNotEmpty()
+  @IsNumber()
+  price: number;
 
+  @IsOptional()
+  @IsString()
+  discount_type?: string; // e.g., "percent" or "fixed"
+
+  @IsOptional()
+  @IsNumber()
+  discount_value?: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductsSizeDto)
+  sizes: CreateProductsSizeDto[];
 }

@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductModule } from './products/product.module';
 import { ProductSizeModule } from './products_size/product_size.module';
 import { Products } from './products/entities/products.entity';
-import { Product_Size } from './products_size/entities/product_size.entity';
+import { Products_Sizes } from './products_size/entities/product_size.entity';
 
 @Module({
   imports: [
@@ -23,7 +23,7 @@ import { Product_Size } from './products_size/entities/product_size.entity';
         username: 'postgres',
         password: 'Pheaktra123',
         database: 'Pheaktra',
-        entities: [Products, Product_Size],
+        entities: [Products, Products_Sizes],
         synchronize: true, // Set to false in production!
       }),
       inject: [ConfigService], // Inject the ConfigService to get config values

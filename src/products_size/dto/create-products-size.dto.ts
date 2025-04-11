@@ -1,16 +1,18 @@
-import { IsNotEmpty, IsNumber, IsString, IsInt } from 'class-validator';
-
+import { IsNotEmpty, IsString, IsNumber, IsUUID, IsInt } from 'class-validator';
 export class CreateProductsSizeDto {
+@IsNotEmpty()
+@IsUUID()
+productId: string; // FK to the Products table
 
-    // @IsNotEmpty()
-    // @IsString()
-    // size: string;  // Size of the product (e.g., Small, Medium, Large)
+@IsNotEmpty()
+@IsString()
+size: string; // Example: "Small", "Medium", "Large"
 
-    // @IsNotEmpty()
-    // @IsNumber()
-    // price: number;  // Price for this specific size
+@IsNotEmpty()
+@IsNumber({ maxDecimalPlaces: 2 })
+price: number; // Example: 10.99
 
-    // @IsNotEmpty()
-    // @IsInt()
-    // quantity: number;  // Quantity for this specific size
+@IsNotEmpty()
+@IsInt()
+size_quantity: number; // Example: 30
 }

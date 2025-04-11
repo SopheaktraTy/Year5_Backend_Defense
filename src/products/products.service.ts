@@ -12,40 +12,52 @@ export class ProductsService {
   ) {}
 
   // Create a new product
-  create(createProductDto: CreateProductDto): Promise<Products> {
+  async create(createProductDto: CreateProductDto): Promise<{ message: string; products: Products }> {
     const product = this.productRepository.create(createProductDto);
-    return this.productRepository.save(product);
-  }
+    const savedProduct = await this.productRepository.save(product);
 
+    return {
+      message: '✅ ផលិតផលបានបង្កើតដោយជោគជ័យ!',
+      products: savedProduct
+    };
+  }
   // Get all products with their sizes
   findAll(): Promise<Products[]> {
     return this.productRepository.find({ relations: ['sizes'] }); // Corrected syntax here
   }
 
-  // Get a product by id
+  // Get a product by id with their sizes
   async findOne(id: string): Promise<Products> {
     const product = await this.productRepository.findOne({ where: { id }, relations: ['sizes'] });
     if (!product) {
-      throw new NotFoundException('មិនឃើញផលិតផល'); // Product not found
+      throw new NotFoundException('❌ មិនឃើញផលិតផល'); // Product not found
     }
     return product;
   }
 
-  //Update a product id
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Products> {
+  //Update a product id with their sizes
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Products }> {
     const product = await this.productRepository.findOne({ where: { id }, relations: ['sizes'] });
     if (!product) {
-      throw new NotFoundException('មិនឃើញផលិតផល');
+      throw new NotFoundException('❌ មិនឃើញផលិតផល');
     }
     Object.assign(product, updateProductDto);
-    return this.productRepository.save(product);
+    const updated = await this.productRepository.save(product);
+    return {
+      message: '✅ ផលិតផលបានកែប្រែដោយជោគជ័យ!',
+      product: updated
+    };
   }
-  //remove a product by id
-  async remove(id: string): Promise<Products>{
-    const product = await this.productRepository.findOneBy({ id });
+
+  //remove a product by id with their sizes
+  async remove(id: string): Promise<{ message: string }> {
+    const product = await this.productRepository.findOne({ where: { id }, relations: ['sizes'] });
     if (!product) {
-      throw new NotFoundException('មិនឃើញផលិតផល');
+      throw new NotFoundException('❌ មិនឃើញផលិតផល');
     }
-    return product;
+    await this.productRepository.delete(id);
+    return { message: '🗑️ ផលិតផលត្រូវបានលុបដោយជោគជ័យ!' };
   }
 }
+
+

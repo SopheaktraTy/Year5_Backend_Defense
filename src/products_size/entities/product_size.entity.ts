@@ -1,21 +1,23 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Products } from '../../products/entities/products.entity'
-;
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Products } from '../../products/entities/products.entity';
 
 @Entity()
-export class Product_Size {
+export class Products_Sizes {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Products, product => product.sizes)
-  product: Products;
+  @ManyToOne(() => Products, (product) => product.sizes, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'product_id' }) // tells TypeORM to use this column as the FK
+  product_id: Products;
 
   @Column()
-  size: string;  // Size of the product (e.g., Small, Medium, Large)
+  size: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  price: number;  // Price for this specific size
+  price: number;
 
   @Column('int', { default: 0 })
-  quantity: number;  // Quantity of this specific size
+  size_quantity: number;
 }
