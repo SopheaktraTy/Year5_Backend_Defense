@@ -1,16 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ProductSizeService } from './products_size.service';
-import { CreateProductsSizeDto } from './dto/create-products-size.dto';
-import { UpdateProductsSizeDto } from './dto/update-products-size.dto';
+import { ProductSizeService } from './product_size.service';
+import { CreateProductSizeDto } from './dto/create-product-size.dto';
+// import { UpdateProductSizeDto } from './dto/update-products-size.dto';
 
-@Controller('product-size')
+@Controller('product-sizes')
 export class ProductSizeController {
-  // constructor(private readonly productSizeService: ProductSizeService) {}
+  constructor(private readonly productSizeService: ProductSizeService) {}
 
-  // @Post()
-  // create(@Body() createProductSizeDto: CreateProductSizeDto) {
-  //   return this.productSizeService.create(createProductSizeDto);
-  // }
+  @Post()
+  create(@Body() createProductSizeDto: CreateProductSizeDto) {
+    return this.productSizeService.create(createProductSizeDto);
+  }
 
   // @Get()
   // findAll() {
