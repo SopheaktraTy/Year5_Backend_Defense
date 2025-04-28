@@ -2,17 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Products } from './entities/product.entity';
+import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProductsService {
   constructor(
-    @InjectRepository(Products) private productRepository: Repository<Products>,
+    @InjectRepository(Product) private productRepository: Repository<Product>,
   ) {}
 
   // Create a new product
-  async create(createProductDto: CreateProductDto): Promise<{ message: string; products: Products }> {
+  async create(createProductDto: CreateProductDto): Promise<{ message: string; products: Product }> {
     const product = this.productRepository.create(createProductDto);
     const savedProduct = await this.productRepository.save(product);
 
@@ -22,12 +22,12 @@ export class ProductsService {
     };
   }
   // Get all products with their sizes
-  findAll(): Promise<Products[]> {
+  findAll(): Promise<Product[]> {
     return this.productRepository.find({ relations: ['sizes'] }); // Corrected syntax here
   }
 
   // Get a product by id with their sizes
-  async findOne(id: string): Promise<Products> {
+  async findOne(id: string): Promise<Product> {
     const product = await this.productRepository.findOne({ where: { id }, relations: ['sizes'] });
     if (!product) {
       throw new NotFoundException('❌ មិនឃើញផលិតផល'); // Product not found
@@ -36,7 +36,7 @@ export class ProductsService {
   }
 
   //Update a product id with their sizes
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Products }> {
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Product }> {
     const product = await this.productRepository.findOne({ where: { id }, relations: ['sizes'] });
     if (!product) {
       throw new NotFoundException('❌ មិនឃើញផលិតផល');

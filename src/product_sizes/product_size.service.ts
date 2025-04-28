@@ -3,19 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateProductSizeDto } from './dto/create-product-size.dto';
 import { UpdateProductSizeDto } from './dto/update-product-size.dto';
-import { Product_Sizes } from './entities/product_size.entity';
-import { Products } from '../products/entities/product.entity';
+import { Product_Size } from './entities/product_size.entity';
+import { Product } from '../products/entities/product.entity';
 
 @Injectable()
 export class ProductSizeService {
   constructor(
-      @InjectRepository(Product_Sizes) private productSizeRepository: Repository<Product_Sizes>,
-      @InjectRepository(Products) private productRepository: Repository<Products>, // Injecting Products repository
+      @InjectRepository(Product_Size) private productSizeRepository: Repository<Product_Size>,
+      @InjectRepository(Product) private productRepository: Repository<Product>, // Injecting Products repository
     ) {}
 
 
 // Create a new product_sizes
-async create(createProductSizeDto: CreateProductSizeDto): Promise<{ message: string; product_size: Product_Sizes }> {
+async create(createProductSizeDto: CreateProductSizeDto): Promise<{ message: string; product_size: Product_Size }> {
   // Check if the product exists
   const product = await this.productRepository.findOne({
     where: { id: createProductSizeDto.product_id }

@@ -3,8 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductModule } from './products/product.module';
 import { ProductSizeModule } from './product_sizes/product_size.module';
-import { Products } from './products/entities/product.entity';
-import { Product_Sizes } from './product_sizes/entities/product_size.entity';
+import { Product } from './products/entities/product.entity';
+import { Product_Size } from './product_sizes/entities/product_size.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,20 +24,16 @@ import { Product_Sizes } from './product_sizes/entities/product_size.entity';
         username: 'postgres',
         password: 'Pheaktra123',
         database: 'Pheaktra',
-        entities: [Products, Product_Sizes],
+        entities: [Product, Product_Size],
         synchronize: true, // Set to false in production!
       }),
       inject: [ConfigService], // Inject the ConfigService to get config values
     }),
 
-
-
-
     // Other modules you need
     ProductModule,
     ProductSizeModule,
-
-
+    AuthModule,
 
   ],
   controllers: [],

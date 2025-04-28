@@ -1,9 +1,9 @@
 // products.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn } from 'typeorm';
-import { Product_Sizes } from '../../product_sizes/entities/product_size.entity';
+import { Product_Size } from '../../product_sizes/entities/product_size.entity';
 
 @Entity()
-export class Products {
+export class Product{
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -35,6 +35,6 @@ export class Products {
   updated_at: Date; // Timestamp for the last product update
 
   // One-to-many relationship with Product_Sizes
-  @OneToMany(() => Product_Sizes, (productSize) => productSize.product, { cascade: true })
-  sizes: Product_Sizes[];  // Product can have multiple sizes
+  @OneToMany(() => Product_Size, (productSize) => productSize.product, { cascade: true })
+  sizes: Product_Size[];  // Product can have multiple sizes
 }

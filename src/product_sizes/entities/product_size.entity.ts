@@ -1,16 +1,16 @@
 // product_size.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, UpdateDateColumn } from 'typeorm';
-import { Products } from '../../products/entities/product.entity';
+import { Product } from '../../products/entities/product.entity';
 
 @Entity()
-export class Product_Sizes {
+export class Product_Size {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   // Many-to-one relationship with Products
-  @ManyToOne(() => Products, (product) => product.sizes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Product, (product) => product.sizes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })  // Explicit foreign key column
-  product: Products;
+  product: Product;
 
   @Column()
   size_tag: string;  // Size of the product, e.g., "Small", "Medium", "Large"

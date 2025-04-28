@@ -13,8 +13,4 @@ export class CreateProductSizeDto {
   @IsNotEmpty()
   @IsNumber({ maxDecimalPlaces: 2 })
   price: number;  // Example: 10.99
-
-  @IsNotEmpty()
-  @IsInt()
-  size_quantity: number;  // Quantity available for this size
 }

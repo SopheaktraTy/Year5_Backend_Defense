@@ -2,8 +2,6 @@ import { Controller, Get, Post, Body, Param , Put, Delete} from '@nestjs/common'
 import { ProductsService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Products } from './entities/product.entity';  // Assuming Products is the entity
-
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductsService) {}
