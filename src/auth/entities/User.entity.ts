@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 @Entity('users')
-export class User{
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
   @Column({ unique: true })
   email: string;
 
@@ -20,10 +21,10 @@ export class User{
   @Column({ nullable: true })
   hashedRefreshToken?: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 
   @BeforeInsert()

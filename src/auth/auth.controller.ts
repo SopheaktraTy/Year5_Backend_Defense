@@ -1,15 +1,20 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateSignupDto } from './dto/create-signup.dto';
+import { UpdateSignupDto } from './dto/update-signup.dto';
+import { CreateLoginDto } from './dto/create-login.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signUp(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.signup(createAuthDto);
+  async signUp(@Body() createSignupDto: CreateSignupDto) {
+    return this.authService.signup(createSignupDto);
+  }
+  @Post('login')
+  async login(@Body() createLoginDto: CreateLoginDto) {
+    return this.authService.login(createLoginDto);
   }
 
   @Get()
@@ -23,7 +28,7 @@ export class AuthController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+  update(@Param('id') id: string, @Body() updateAuthDto: UpdateSignupDto) {
     return this.authService.update(+id, updateAuthDto);
   }
 
