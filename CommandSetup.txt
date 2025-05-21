@@ -1,0 +1,22 @@
+% npm run start:dev
+
+#install library swagger
+% npm i @nestjs/swagger
+
+#install library typeorm
+% npm i @nestjs/typeorm
+
+#install class-validator (DTO)
+% npm i class-validator --save
+
+#install class-transformer (DTO)
+% npm install class-transformer
+
+#Auto generate folder with crud
+% nest g res <foldername>
+
+#Generate Jwt token
+% npm install --save @nestjs/jwt
+
+#Config Module
+% npm i @nestjs/config
