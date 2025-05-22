@@ -10,6 +10,8 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
+import { MoreThanOrEqual } from 'typeorm';
+
 
 
 
@@ -71,6 +73,42 @@ async login(createLoginDto: CreateLoginDto) {
     message: 'Login successful',
     AccessToken,
     RefreshToken,
+  };
+}
+
+async refreshTokens(refreshToken: string) {
+  // 1. Find the old token with user relation
+  const storedToken = await this.RefreshTokenRepository.findOne({
+    where: { token: refreshToken },
+    relations: ['user'],
+  });
+  if (!storedToken) {
+    throw new HttpException('Refresh token not found', HttpStatus.UNAUTHORIZED);
+  }
+  // 2. Check if expired
+  if (storedToken.expires_at < new Date()) {
+    await this.RefreshTokenRepository.remove(storedToken);
+    throw new HttpException('Refresh token expired', HttpStatus.UNAUTHORIZED);
+  }
+  const user = storedToken.user;
+  // 3. Delete old token from database
+  await this.RefreshTokenRepository.remove(storedToken);
+  // 4. Generate new tokens
+  const payload = { email: user.email, sub: user.id };
+  const newAccessToken = this.jwtService.sign(payload);
+  const newRefreshToken = uuidv4();
+  // 5. Save new refresh token
+  const newTokenEntity = this.RefreshTokenRepository.create({
+    token: newRefreshToken,
+    user,
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  });
+  await this.RefreshTokenRepository.save(newTokenEntity);
+  // 6. Return new tokens
+  return {
+    message: 'Token refreshed successfully',
+    AccessToken: newAccessToken,
+    RefreshToken: newRefreshToken,
   };
 }
 

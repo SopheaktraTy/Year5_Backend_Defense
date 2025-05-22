@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { CreateSignupDto } from './dto/create-signup.dto';
 import { UpdateSignupDto } from './dto/update-signup.dto';
 import { CreateLoginDto } from './dto/create-login.dto';
+import { CreateRefreshTokenDto } from './dto/create-refreshtoken.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -17,8 +18,8 @@ export class AuthController {
     return this.authService.login(createLoginDto);
   }
   @Post('refresh')
-  async refrestokens(@Body() createLoginDto: CreateLoginDto) {
-    return this.authService.refreshtokens(createLoginDto);
+  async refreshTokens(@Body() createRefreshTokenDto: CreateRefreshTokenDto) {
+    return this.authService.refreshTokens(createRefreshTokenDto);
   }
 
 
