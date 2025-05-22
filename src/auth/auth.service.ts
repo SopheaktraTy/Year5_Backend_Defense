@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSignupDto } from './dto/create-signup.dto';
 import { UpdateSignupDto } from './dto/update-signup.dto';
+import { CreateRefreshTokenDto } from './dto/create-refreshtoken.dto';
 import { CreateLoginDto } from'./dto/create-login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/User.entity';
@@ -57,18 +58,24 @@ async login(createLoginDto: CreateLoginDto) {
   if (!passwordMatch) {
     throw new HttpException('Incorrect password', HttpStatus.BAD_REQUEST);
   }
-  // 3. Generate JWT AccessToken and RefreshToken
+  
+  // 3. Delete existing refresh tokens for this user (optional but recommended)
+  await this.RefreshTokenRepository.delete({ user: user });
+  
+  // 4. Generate JWT AccessToken and RefreshToken
   const payload = { email: user.email, sub: user.id };
   const AccessToken = this.jwtService.sign(payload);
   const RefreshToken = uuidv4();
-  // 4. Create and Save refresh token in the database
+
+  // 5. Create and Save refresh token in the database
   const refreshToken = this.RefreshTokenRepository.create({
     token: RefreshToken,
     user: user,
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
-    await this.RefreshTokenRepository.save(refreshToken);
-  // 5. Return success message and token
+  await this.RefreshTokenRepository.save(refreshToken);
+
+  // 6. Return success message and tokens
   return {
     message: 'Login successful',
     AccessToken,
@@ -76,10 +83,11 @@ async login(createLoginDto: CreateLoginDto) {
   };
 }
 
-async refreshTokens(refreshToken: string) {
+
+async refreshTokens(createRefreshTokenDto: CreateRefreshTokenDto) {
   // 1. Find the old token with user relation
   const storedToken = await this.RefreshTokenRepository.findOne({
-    where: { token: refreshToken },
+    where: { token: createRefreshTokenDto.token },
     relations: ['user'],
   });
   if (!storedToken) {
@@ -109,6 +117,7 @@ async refreshTokens(refreshToken: string) {
     message: 'Token refreshed successfully',
     AccessToken: newAccessToken,
     RefreshToken: newRefreshToken,
+    userid: user.id,
   };
 }
 

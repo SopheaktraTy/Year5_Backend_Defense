@@ -20,3 +20,9 @@
 
 #Config Module
 % npm i @nestjs/config
+
+#uuidv4 library
+% npm i  uuid
+
+#bcryptjs library
+% npm i  bcryptjs

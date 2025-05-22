@@ -1,5 +1,5 @@
-import { IsUUID, IsString, IsDate } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString} from 'class-validator';
+
 
 export class CreateRefreshTokenDto {
 @IsString()
