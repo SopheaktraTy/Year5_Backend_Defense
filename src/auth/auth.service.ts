@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateSignupDto } from './dto/create-signup.dto';
-import { UpdateSignupDto } from './dto/update-signup.dto';
-import { CreateRefreshTokenDto } from './dto/create-refreshtoken.dto';
-import { CreateLoginDto } from'./dto/create-login.dto';
+import { CreateSignupDto } from './dto/signup.dto';
+import { UpdateSignupDto } from './dto/change-password.dto';
+import { CreateRefreshTokenDto } from './dto/refresh-token.dto';
+import { CreateLoginDto } from'./dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/User.entity';
 import { RefreshToken } from './entities/Refresh-token.entity'
@@ -11,7 +11,6 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { MoreThanOrEqual } from 'typeorm';
 
 
 
@@ -25,8 +24,8 @@ export class AuthService {
   ) {}
 
 
-/* Create a Signup or Create User */
 
+/* Create a Signup or Create User */
 async signup(createAuthDto: CreateSignupDto) {
   //check a email
   const emailInUse = await this.UserRepository.findOne({ where: { email: createAuthDto.email } });
@@ -45,8 +44,8 @@ async signup(createAuthDto: CreateSignupDto) {
 }
 
 
-/* Create a Login and Generate JWT Token */
 
+/* Create a Login and Generate JWT Token */
 async login(createLoginDto: CreateLoginDto) {
   // 1. Find user by email
   const user = await this.UserRepository.findOne({ where: { email: createLoginDto.email } });
@@ -58,15 +57,12 @@ async login(createLoginDto: CreateLoginDto) {
   if (!passwordMatch) {
     throw new HttpException('Incorrect password', HttpStatus.BAD_REQUEST);
   }
-  
   // 3. Delete existing refresh tokens for this user (optional but recommended)
   await this.RefreshTokenRepository.delete({ user: user });
-  
   // 4. Generate JWT AccessToken and RefreshToken
   const payload = { email: user.email, sub: user.id };
   const AccessToken = this.jwtService.sign(payload);
   const RefreshToken = uuidv4();
-
   // 5. Create and Save refresh token in the database
   const refreshToken = this.RefreshTokenRepository.create({
     token: RefreshToken,
@@ -74,7 +70,6 @@ async login(createLoginDto: CreateLoginDto) {
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
   await this.RefreshTokenRepository.save(refreshToken);
-
   // 6. Return success message and tokens
   return {
     message: 'Login successful',
@@ -84,6 +79,8 @@ async login(createLoginDto: CreateLoginDto) {
 }
 
 
+
+/* Create a refreshTokens and Generate refresh new access Token and refresh token */
 async refreshTokens(createRefreshTokenDto: CreateRefreshTokenDto) {
   // 1. Find the old token with user relation
   const storedToken = await this.RefreshTokenRepository.findOne({
@@ -123,20 +120,6 @@ async refreshTokens(createRefreshTokenDto: CreateRefreshTokenDto) {
 
 
 
-  // findAll() {
-  //   return `This action returns all auth`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} auth`;
-  // }
-
-  // update(id: number, updateAuthDto: UpdateSignupDto) {
-  //   return `This action updates a #${id} auth`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} auth`;
-  // }
+ 
 }
 

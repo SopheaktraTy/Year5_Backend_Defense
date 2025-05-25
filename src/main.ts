@@ -19,6 +19,14 @@ async function bootstrap() {
     .setTitle('E-commerce API')
     .setDescription('E-Commerce CRUD API')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'Access-Token', // This name will be used in decorators
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

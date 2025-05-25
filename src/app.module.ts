@@ -11,6 +11,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
 /**/
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+
 @Module({
   imports: [
     // Load configuration settings from .env or other config source
@@ -37,7 +41,7 @@ import { jwtConfig } from './config/jwt.config';
       inject: [ConfigService],
     }),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [ AppService ],
 })
 export class AppModule {}
