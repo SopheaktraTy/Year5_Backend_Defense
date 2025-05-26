@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { CreateSignupDto } from './dto/signup.dto';
-import { UpdateSignupDto } from './dto/change-password.dto';
-import { CreateRefreshTokenDto } from './dto/refresh-token.dto';
-import { CreateLoginDto } from'./dto/login.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+/*DTO*/
+import { SignupDto } from './dto/signup.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { LoginDto } from'./dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+/*Entities*/
 import { User } from './entities/User.entity';
 import { RefreshToken } from './entities/Refresh-token.entity'
-import { Repository } from 'typeorm';
+/*Services*/
+import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,7 +29,7 @@ export class AuthService {
 
 
 /* Create a Signup or Create User */
-async signup(createAuthDto: CreateSignupDto) {
+async signup(createAuthDto: SignupDto) {
   //check a email
   const emailInUse = await this.UserRepository.findOne({ where: { email: createAuthDto.email } });
   if (emailInUse) {
@@ -46,7 +49,7 @@ async signup(createAuthDto: CreateSignupDto) {
 
 
 /* Create a Login and Generate JWT Token */
-async login(createLoginDto: CreateLoginDto) {
+async login(createLoginDto: LoginDto) {
   // 1. Find user by email
   const user = await this.UserRepository.findOne({ where: { email: createLoginDto.email } });
   if (!user) {
@@ -79,9 +82,8 @@ async login(createLoginDto: CreateLoginDto) {
 }
 
 
-
 /* Create a refreshTokens and Generate refresh new access Token and refresh token */
-async refreshTokens(createRefreshTokenDto: CreateRefreshTokenDto) {
+async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   // 1. Find the old token with user relation
   const storedToken = await this.RefreshTokenRepository.findOne({
     where: { token: createRefreshTokenDto.token },
@@ -116,10 +118,14 @@ async refreshTokens(createRefreshTokenDto: CreateRefreshTokenDto) {
     RefreshToken: newRefreshToken,
     userid: user.id,
   };
+  
 }
 
 
+/* Create a changePassword */
 
- 
+// async changePassword(changePasswordDto: ChangePasswordDto) {
+// }
+
 }
 

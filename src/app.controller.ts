@@ -4,7 +4,7 @@ import { AuthGuard } from './auth/guards/auth.guard';  // adjust path if needed
 import { AppService } from './app.service';
 
 @ApiTags('example')
-@ApiBearerAuth()           // Adds Bearer token auth info to Swagger UI
+@ApiBearerAuth()         // Adds Bearer token auth info to Swagger UI
 @UseGuards(AuthGuard)     // Protects all routes in this controller
 @Controller()
 export class AppController {
@@ -15,4 +15,3 @@ export class AppController {
     return this.appService.getHello();
   }
 }
-[]

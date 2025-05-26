@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateSignupDto } from './signup.dto';
+import { IsString } from 'class-validator';
 
-export class UpdateSignupDto extends PartialType(CreateSignupDto) {}
+export class ChangePasswordDto {
+  @IsString()
+  oldPassword: string;
+
+  @IsString()
+  newPassword: string;
+}
