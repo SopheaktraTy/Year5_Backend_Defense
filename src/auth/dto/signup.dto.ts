@@ -10,15 +10,13 @@ export class SignupDto {
   @Matches(/^(?=.*[A-Za-z])/, { message: 'Password must contain at least one letter' })
   password: string;
 
-  @IsOptional()
   @IsString()
   @MinLength(3, { message: 'Firstname must be at least 3 characters long' })
-  firstname?: string;
+  firstname: string;
 
-  @IsOptional()
   @IsString()
-  @MinLength(3, { message: 'Lastname must be at least 3 characters long' })
-  lastname?: string;
+  @MinLength(2, { message: 'Lastname must be at least 3 characters long' })
+  lastname: string;
 
   @IsOptional()
   @IsString()

@@ -8,8 +8,7 @@ import { User } from './entities/User.entity';
 import { RefreshToken } from './entities/Refresh-token.entity'
 /*Services*/
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable } from '@nestjs/common';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus , NotFoundException, Injectable, UnauthorizedException} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
@@ -118,14 +117,33 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
     RefreshToken: newRefreshToken,
     userid: user.id,
   };
-  
 }
 
 
 /* Create a changePassword */
-
-// async changePassword(changePasswordDto: ChangePasswordDto) {
-// }
-
+async changePassword(userId: string, oldPassword: string, newPassword: string) {
+  // Find the user by ID
+  const user = await this.UserRepository.findOneBy({ id: userId });
+  if (!user) {
+    throw new NotFoundException('User not found...');
+  }
+  // Check if old password and new password are the same
+  if (oldPassword === newPassword) {
+    throw new UnauthorizedException('New password must be different from the old password');
+  }
+  // Compare the old password with the stored hashed password
+  const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!passwordMatch) {
+    throw new UnauthorizedException('Wrong credentials');
+  }
+  // Hash the new password
+  const newHashedPassword = await bcrypt.hash(newPassword, 10);
+  // Update user password and save
+  user.password = newHashedPassword;
+  await this.UserRepository.save(user);
+  return { message: 'Password changed successfully' };
 }
+}
+
+
 

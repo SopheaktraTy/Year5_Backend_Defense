@@ -1,9 +1,13 @@
-import { Controller, Post, Body, Put} from '@nestjs/common';
+import { Controller, Post, Body, Put, UseGuards, Req} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forget-password.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from './guards/auth.guard';
+
 
 @Controller('auth')
 export class AuthController {
@@ -23,16 +27,25 @@ export class AuthController {
   }
 
   // @ApiTags('example')
-  // @ApiBearerAuth()         
-  // @UseGuards(AuthGuard)
-  // @Put('change-password')
-  // async changePassword(@Body() ChangePasswordDto: ChangePasswordDto) {
-  //   return this.authService.changePassword(ChangePasswordDto);
-  // }
-  
+  @ApiBearerAuth('Access-Token')
+  @UseGuards(AuthGuard)
+  @Put('change-password')
+  async changePassword(
+    @Body() ChangePasswordDto: ChangePasswordDto,
+    @Req() req) {
+    return this.authService.changePassword(
+      req.userId,
+      ChangePasswordDto.oldPassword,
+      ChangePasswordDto.newPassword);
+  }
+
+    @Post('forgot-password')
+    async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
+      return this.authService.forgotpassword(forgotPasswordDto)
+    }
 
 }
-  // TODO: POST CHANGE PASSWORD
+
 
   // TODO: Forgot Password
 
