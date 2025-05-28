@@ -26,3 +26,6 @@
 
 #bcryptjs library
 % npm i  bcryptjs
+
+#Install nodemailer
+npm install nodemailer

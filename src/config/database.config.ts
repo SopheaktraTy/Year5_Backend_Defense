@@ -4,6 +4,7 @@ import { Product } from '../products/entities/product.entity';
 import { Product_Size } from '../product_sizes/entities/product_size.entity';
 import { User } from '../auth/entities/User.entity';
 import { RefreshToken } from '../auth/entities/Refresh-token.entity'
+import { ResetToken } from '../auth/entities/Reset-token.entity';
 
 export const databaseConfig = async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
     type: 'postgres',
@@ -12,6 +13,6 @@ export const databaseConfig = async (configService: ConfigService): Promise<Type
     username: configService.get('DATABASE_USERNAME'),
     password: configService.get('DATABASE_PASSWORD'),
     database: configService.get('DATABASE_NAME'),
-    entities: [Product, Product_Size, User, RefreshToken],
+    entities: [Product, Product_Size, User, RefreshToken, ResetToken],
     synchronize: true, // Set to false in production for safety
 });

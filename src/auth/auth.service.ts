@@ -2,17 +2,20 @@
 import { SignupDto } from './dto/signup.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginDto } from'./dto/login.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+
 /*Entities*/
 import { User } from './entities/User.entity';
 import { RefreshToken } from './entities/Refresh-token.entity'
+import { ResetToken } from './entities/Reset-token.entity';
 /*Services*/
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException, HttpStatus , NotFoundException, Injectable, UnauthorizedException} from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
+import { MailService } from '..//services/mail.service';
+
 
 
 
@@ -22,7 +25,9 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private UserRepository: Repository<User>,
     @InjectRepository(RefreshToken) private RefreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository( ResetToken ) private ResetTokenRepository: Repository<ResetToken>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
 
@@ -45,9 +50,7 @@ async signup(createAuthDto: SignupDto) {
   return { message: 'User registration successful' };
 }
 
-
-
-/* Create a Login and Generate JWT Token */
+/* Login and Generate JWT Token */
 async login(createLoginDto: LoginDto) {
   // 1. Find user by email
   const user = await this.UserRepository.findOne({ where: { email: createLoginDto.email } });
@@ -67,7 +70,7 @@ async login(createLoginDto: LoginDto) {
   const RefreshToken = uuidv4();
   // 5. Create and Save refresh token in the database
   const refreshToken = this.RefreshTokenRepository.create({
-    token: RefreshToken,
+    refresh_token: RefreshToken,
     user: user,
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
@@ -80,12 +83,11 @@ async login(createLoginDto: LoginDto) {
   };
 }
 
-
-/* Create a refreshTokens and Generate refresh new access Token and refresh token */
+/* refreshTokens and Generate refresh new access Token and refresh token */
 async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   // 1. Find the old token with user relation
   const storedToken = await this.RefreshTokenRepository.findOne({
-    where: { token: createRefreshTokenDto.token },
+    where: { refresh_token: createRefreshTokenDto.refreshtoken },
     relations: ['user'],
   });
   if (!storedToken) {
@@ -105,7 +107,7 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   const newRefreshToken = uuidv4();
   // 5. Save new refresh token
   const newTokenEntity = this.RefreshTokenRepository.create({
-    token: newRefreshToken,
+    refresh_token: newRefreshToken,
     user,
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
@@ -120,7 +122,7 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
 }
 
 
-/* Create a changePassword */
+/* changePassword */
 async changePassword(userId: string, oldPassword: string, newPassword: string) {
   // Find the user by ID
   const user = await this.UserRepository.findOneBy({ id: userId });
@@ -142,8 +144,30 @@ async changePassword(userId: string, oldPassword: string, newPassword: string) {
   user.password = newHashedPassword;
   await this.UserRepository.save(user);
   return { message: 'Password changed successfully' };
+  }
+
+  /* forgetPassword */
+  async forgetPassword(email: string) {
+    // 1. Find user by email
+    const user = await this.UserRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    // 2. Delete all expired reset tokens for this user (expired before now)
+    await this.ResetTokenRepository.delete({
+      user: { id: user.id },
+      expiresAt: LessThan(new Date()),
+    });
+    // 3. Generate reset token
+    const resetToken = uuidv4();
+    const resetTokenEntity = this.ResetTokenRepository.create({
+      token: resetToken,
+      user,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // expires in 15 minutes
+    });
+    await this.ResetTokenRepository.save(resetTokenEntity);
+    // 4. Send email using MailService (passing token only)
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
+    return { message: 'Reset password link sent to your email' };
+  }
 }
-}
-
-
-

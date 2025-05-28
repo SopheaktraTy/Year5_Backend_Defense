@@ -41,7 +41,7 @@ export class AuthController {
 
     @Post('forgot-password')
     async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
-      return this.authService.forgotpassword(forgotPasswordDto)
+      return this.authService.forgetPassword(forgotPasswordDto.email)
     }
 
 }
@@ -53,12 +53,7 @@ export class AuthController {
 
   // TODO: Logout
   
-
-
-
-
-  //TODO: create other service
-
+  
   // TODO: Get User Profile
 
   // TODO: Update User Profile

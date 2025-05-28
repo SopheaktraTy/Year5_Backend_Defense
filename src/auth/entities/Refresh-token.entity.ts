@@ -7,7 +7,7 @@ export class RefreshToken {
 id: string;
 
 @Column()
-token: string;
+refresh_token: string;
 
 @Column({ type: 'timestamp' })
 expires_at: Date;

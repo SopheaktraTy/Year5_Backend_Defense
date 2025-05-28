@@ -7,9 +7,12 @@ import { ProductModule } from './products/product.module';
 import { ProductSizeModule } from './product_sizes/product_size.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from './services/mail.module';
+
 /**/
 import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
+/**/
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { jwtConfig } from './config/jwt.config';
     ProductModule,
     ProductSizeModule,
     AuthModule,
+
+    // MailModule for sending emails
+    MailModule,
 
     // TypeORM configuration
     TypeOrmModule.forRootAsync({
