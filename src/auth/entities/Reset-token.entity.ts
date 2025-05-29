@@ -7,7 +7,7 @@ export class ResetToken {
   id: string;
 
   @Column()
-  token: string;
+  reset_token: string;
 
   @Column({ type: 'timestamp' })
   expiresAt: Date;

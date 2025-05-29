@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { User } from '../auth/entities/User.entity'; 
-import { RefreshToken } from './entities/Refresh-token.entity' 
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { jwtConfig } from '../config/jwt.config'; 
-import { ResetToken } from './entities/Reset-token.entity';
+import { jwtConfig } from '../config/jwt.config';
 import { MailModule } from '../services/mail.module';
+import { AuthController } from './auth.controller';
+/**/
+import { User } from '../auth/entities/User.entity';
+import { RefreshToken } from './entities/Refresh-token.entity'
+import { ResetToken } from './entities/Reset-token.entity';
+
+
 
 @Module({
   imports: [

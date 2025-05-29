@@ -1,20 +1,20 @@
-// products.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn } from 'typeorm';
-import { Product_Size } from '../../product_sizes/entities/product_size.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, ManyToOne} from 'typeorm';
+import { Product_Size } from './product_size.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity()
-export class Product{
+export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
-  category_id: string;
+  @ManyToOne(() => Category, category => category.products, { onDelete: 'SET NULL' })
+  category: Category; // This adds the relation
 
   @Column({ type: 'varchar', length: 255 })
   name: string;  // Product name
 
   @Column({ nullable: true, type: 'varchar', length: 255 })
-  picture: string;  // Optional product picture URL
+  image: string;  // Optional product picture URL
 
   @Column({ nullable: true, type: 'text' })
   description: string;  // Optional product description
@@ -34,7 +34,5 @@ export class Product{
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date; // Timestamp for the last product update
 
-  // One-to-many relationship with Product_Sizes
-  @OneToMany(() => Product_Size, (productSize) => productSize.product, { cascade: true })
-  sizes: Product_Size[];  // Product can have multiple sizes
+
 }

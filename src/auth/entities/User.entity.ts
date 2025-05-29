@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -11,11 +11,21 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  otp: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otpExpiresAt: Date | null;
+
+
+  @Column({ default: false })
+  isVerified: boolean;
+
   @Column({ type: 'text', nullable: true })
-  image: string | null;  // base64 string stored as text
+  image: string | null;
 
   @Column({ nullable: true })
-  role: string;
+  roleId: string;
 
   @Column({ nullable: true })
   firstname: string;

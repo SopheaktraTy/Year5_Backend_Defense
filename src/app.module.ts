@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 /**/
 import { ProductModule } from './products/product.module';
-import { ProductSizeModule } from './product_sizes/product_size.module';
+import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from './services/mail.module';
@@ -12,19 +12,16 @@ import { MailModule } from './services/mail.module';
 /**/
 import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
+import { CategoriesModule } from './categories/categories.module';
+
 /**/
 
 @Module({
   imports: [
-    // Load configuration settings from .env or other config source
-    ConfigModule.forRoot({
-      isGlobal: true, // Makes config available globally
-    }),
-
     // Other modules you need
     ProductModule,
-    ProductSizeModule,
     AuthModule,
+    RolesModule,
 
     // MailModule for sending emails
     MailModule,
@@ -42,6 +39,15 @@ import { jwtConfig } from './config/jwt.config';
       useFactory: async (configService: ConfigService) => jwtConfig(configService), // Use jwtConfig function
       inject: [ConfigService],
     }),
+
+    // Load configuration settings from .env or other config source
+    ConfigModule.forRoot({
+      isGlobal: true, // Makes config available globally
+    }),
+
+    CategoriesModule,
+
+
   ],
   controllers: [],
   providers: [],

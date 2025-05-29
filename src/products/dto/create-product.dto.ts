@@ -1,7 +1,6 @@
 // create-product.dto.ts
 import { IsNotEmpty, IsOptional, IsString, IsUUID, IsNumber, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateProductSizeDto } from '../../product_sizes/dto/create-product-size.dto';
 
 export class CreateProductDto {
   @IsNotEmpty()

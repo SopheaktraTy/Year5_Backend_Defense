@@ -29,3 +29,6 @@
 
 #Install nodemailer
 npm install nodemailer
+
+#body-parser
+npm install body-parser
