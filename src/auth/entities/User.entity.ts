@@ -15,17 +15,17 @@ export class User {
   otp: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  otpExpiresAt: Date | null;
+  otp_expires_at: Date | null;
 
 
   @Column({ default: false })
-  isVerified: boolean;
+  is_verified: boolean;
 
   @Column({ type: 'text', nullable: true })
-  image: string | null;
+  image: string | null ;
 
   @Column({ nullable: true })
-  roleId: string;
+  role_id: string;
 
   @Column({ nullable: true })
   firstname: string;

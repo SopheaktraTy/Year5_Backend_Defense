@@ -7,9 +7,9 @@ import { jwtConfig } from '../config/jwt.config';
 import { MailModule } from '../services/mail.module';
 import { AuthController } from './auth.controller';
 /**/
-import { User } from '../auth/entities/User.entity';
-import { RefreshToken } from './entities/Refresh-token.entity'
-import { ResetToken } from './entities/Reset-token.entity';
+import { User } from './entities/user.entity';
+import { RefreshToken } from './entities/refresh_token.entity'
+import { ResetToken } from './entities/reset_token.entity';
 
 
 

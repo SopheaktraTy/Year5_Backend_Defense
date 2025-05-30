@@ -2,14 +2,15 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
+import { Product } from '../products/entities/product.entity'
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Category)private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Product) private productRepository: Repository<Product>,
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<{ message: string; category: Category }> {
@@ -61,9 +62,18 @@ export class CategoriesService {
     };
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    const category = await this.findOne(id);
-    await this.categoryRepository.remove(category);
-    return { message: 'Category removed successfully' };
-  }
+ async remove(id: string): Promise<{ message: string }> {
+  const category = await this.findOne(id);
+
+  // Set category to null for all products having this category
+  await this.productRepository
+    .createQueryBuilder()
+    .update()
+    .set({ category: null })
+    .where('categoryId = :id', { id })
+    .execute();
+  // Now remove the category
+  await this.categoryRepository.remove(category);
+  return { message: 'Category removed successfully, and products updated' };
+}
 }

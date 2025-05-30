@@ -1,5 +1,5 @@
 import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,ManyToOne,JoinColumn,} from 'typeorm';
-import { User } from './User.entity';
+import { User } from './user.entity';
 
 @Entity('reset_tokens')
 export class ResetToken {
@@ -10,10 +10,10 @@ export class ResetToken {
   reset_token: string;
 
   @Column({ type: 'timestamp' })
-  expiresAt: Date;
+  expires_at: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  created_at: Date;
 
   @ManyToOne(() => User,  { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

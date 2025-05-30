@@ -1,14 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, ManyToOne} from 'typeorm';
-import { Product_Size } from './product_size.entity';
+import { IsOptional, Min, Max } from 'class-validator';
 import { Category } from '../../categories/entities/category.entity';
+import { ProductVariable } from './product_variables.entity';
 
-@Entity()
+@Entity('products')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Category, category => category.products, { onDelete: 'SET NULL' })
-  category: Category; // This adds the relation
+  @ManyToOne(() => Category, category => category.products, { onDelete: 'SET NULL', nullable: true })
+  category: Category | null;
+
 
   @Column({ type: 'varchar', length: 255 })
   name: string;  // Product name
@@ -19,14 +21,20 @@ export class Product {
   @Column({ nullable: true, type: 'text' })
   description: string;  // Optional product description
 
-  @Column('float', { nullable: true })
-  price: number;  // Product price
+  @Column('float')
+  original_price: number;  // Product original price
 
-  @Column({ nullable: true, type: 'varchar', length: 50 })
-  discount_type: string;  // 'percent' or 'fixed'
+  @Column('float', { nullable: true, default: null })
+  discounted_price: number;  // Product discounted price
 
-  @Column('float', { nullable: true })
-  discount_value: number;
+  @Column({ type: 'int', default: 0 })
+  total_quantity: number;
+
+  @IsOptional()
+  @Min(0)
+  @Max(100)
+  @Column({ type: 'float', nullable: true, default: null })
+  discount_percentage_tag?: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;  // Timestamp when the product was created
@@ -34,5 +42,6 @@ export class Product {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date; // Timestamp for the last product update
 
-
+  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product, { cascade: true })
+  productVariables: ProductVariable[];
 }

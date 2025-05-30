@@ -4,9 +4,9 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginDto } from'./dto/login.dto';
 
 /*Entities*/
-import { User } from './entities/User.entity';
-import { RefreshToken } from './entities/Refresh-token.entity'
-import { ResetToken } from './entities/Reset-token.entity';
+import { User } from './entities/user.entity';
+import { RefreshToken } from './entities/refresh_token.entity'
+import { ResetToken } from './entities/reset_token.entity';
 /*Services*/
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException, HttpStatus , NotFoundException, Injectable, UnauthorizedException, BadRequestException} from '@nestjs/common';
@@ -43,13 +43,13 @@ async signup(createAuthDto: SignupDto) {
   const newUser = this.UserRepository.create({
     ...createAuthDto,
     password: hashedPassword,
-    isVerified: false,
+    is_verified: false,
   });
   await this.UserRepository.save(newUser);
   // 4. Generate 6-digit OTP and set expiry (5 minutes)
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   newUser.otp = otp;
-  newUser.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  newUser.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
   await this.UserRepository.save(newUser);
   // 5. Send OTP email using your styled email method
   await this.mailService.sendOtpEmail(newUser.email, otp);
@@ -65,7 +65,7 @@ async resendVerifyOtp(email: string) {
   // Generate new OTP and expiry (5 minutes)
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
-  user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
   await this.UserRepository.save(user);
   // Send OTP email using existing mail method
   await this.mailService.sendOtpEmail(user.email, otp);
@@ -77,19 +77,19 @@ async verifySignupLoginOtp(email: string, otp: string) {
   const user = await this.UserRepository.findOne({ where: { email } });
   if (!user) throw new HttpException('User account not found.', HttpStatus.BAD_REQUEST);
 
-  if (!user.otp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+  if (!user.otp || !user.otp_expires_at || user.otp_expires_at < new Date()) {
     throw new HttpException('The verification code has expired or is invalid.', HttpStatus.BAD_REQUEST);
   }
   if (user.otp !== otp) {
     throw new HttpException('Incorrect verification code.', HttpStatus.BAD_REQUEST);
   }
   // If user is not verified (sign-up flow), mark verified
-  if (!user.isVerified) {
-    user.isVerified = true;
+  if (!user.is_verified) {
+    user.is_verified = true;
   }
   // Clear OTP fields after successful verification
   user.otp = null;
-  user.otpExpiresAt = null;
+  user.otp_expires_at = null;
   await this.UserRepository.save(user);
   // Generate JWT tokens
   const payload = { email: user.email, sub: user.id };
@@ -118,14 +118,14 @@ async login(createLoginDto: LoginDto) {
   const passwordMatch = await bcrypt.compare(createLoginDto.password, user.password);
   if (!passwordMatch) throw new HttpException('Invalid password. Please try again.', HttpStatus.BAD_REQUEST);
 
-  if (!user.isVerified) {
+  if (!user.is_verified) {
     throw new HttpException('Account not verified. Please verify your email first.', HttpStatus.FORBIDDEN);
   }
 
   // Generate OTP and save
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
-  user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+  user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
   await this.UserRepository.save(user);
 
   // Send OTP email
@@ -210,14 +210,14 @@ async changePassword(userId: string, oldPassword: string, newPassword: string) {
     // 2. Delete all expired reset tokens for this user (expired before now)
     await this.ResetTokenRepository.delete({
       user: { id: user.id },
-      expiresAt: LessThan(new Date()),
+      expires_at: LessThan(new Date()),
     });
     // 3. Generate reset token
     const resetToken = uuidv4();
     const resetTokenEntity = this.ResetTokenRepository.create({
       reset_token: resetToken,
       user,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // expires in 15 minutes
+      expires_at: new Date(Date.now() + 15 * 60 * 1000), // expires in 15 minutes
     });
     await this.ResetTokenRepository.save(resetTokenEntity);
     // 4. Send email using MailService (passing token only)

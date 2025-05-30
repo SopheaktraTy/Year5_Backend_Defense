@@ -7,28 +7,28 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @Post()
-  create(@Body() createRoleDto: CreateRoleDto) {
-    return this.rolesService.create(createRoleDto);
-  }
+  // @Post()
+  // create(@Body() createRoleDto: CreateRoleDto) {
+  //   return this.rolesService.create(createRoleDto);
+  // }
 
-  @Get()
-  findAll() {
-    return this.rolesService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.rolesService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.rolesService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.rolesService.update(+id, updateRoleDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
+  //   return this.rolesService.update(+id, updateRoleDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.rolesService.remove(+id);
+  // }
 }
