@@ -1,26 +1,7 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, IsNumber, IsArray, ValidateNested, Min, Max, } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsArray, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export class ProductVariableDto {
-  @ApiProperty({
-    description: 'Size of the product variant (e.g., S, M, L, XL)',
-    example: 'M',
-  })
-  @IsNotEmpty()
-  @IsString()
-  size: string;
-
-  @ApiProperty({
-    description: 'Quantity available for this size',
-    example: 10,
-    minimum: 0,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  quantity: number;
-}
+import { CreateProductVariableDto } from './create-product-variable.dto';
 
 export class CreateProductDto {
   @ApiProperty({
@@ -28,7 +9,7 @@ export class CreateProductDto {
     example: 'b8a8d7f9-1e56-4e2b-9f99-4f890db44a12',
   })
   @IsOptional()
-  category_id?: string;
+  categoryId?: string;
 
   @ApiProperty({
     description: 'Name of the product',
@@ -36,11 +17,11 @@ export class CreateProductDto {
   })
   @IsNotEmpty()
   @IsString()
-  name: string;
+  productName: string;
 
   @ApiPropertyOptional({
     description: 'URL of the product image',
-    example: 'http://example.com/image.png',
+    example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...',
   })
   @IsOptional()
   @IsString()
@@ -60,15 +41,7 @@ export class CreateProductDto {
   })
   @IsNotEmpty()
   @IsNumber()
-  original_price: number;
-
-  @ApiPropertyOptional({
-    description: 'Discounted price of the product, if any',
-    example: 24.99,
-  })
-  @IsOptional()
-  @IsNumber()
-  discounted_price?: number;
+  originalPrice: number;
 
   @ApiPropertyOptional({
     description: 'Discount percentage (0-100)',
@@ -79,14 +52,14 @@ export class CreateProductDto {
   @IsOptional()
   @Min(0)
   @Max(100)
-  discount_percentage_tag?: number;
+  discountPercentageTag?: number;
 
   @ApiProperty({
     description: 'List of product size variants with quantities',
-    type: [ProductVariableDto],
+    type: [CreateProductVariableDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ProductVariableDto)
-  productVariables: ProductVariableDto[];
+  @Type(() => CreateProductVariableDto)
+  productVariables: CreateProductVariableDto[];
 }

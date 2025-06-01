@@ -1,15 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, OneToMany, UpdateDateColumn } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
-
+import { CartItem } from '../entities/cart_item.entity';
 @Entity('carts')
 export class Cart {
 @PrimaryGeneratedColumn('uuid')
 id: string;
 
-@ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+@ManyToOne(() => User, (user) => user.carts, { nullable: false })
 @JoinColumn({ name: 'user_id' })
-user_id: User;
+user: User;
+
+@OneToMany(() => CartItem, cartItem => cartItem.cart)
+cartItems: CartItem[];
 
 @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
 createdAt: Date;

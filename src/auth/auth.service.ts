@@ -91,6 +91,10 @@ async verifySignupLoginOtp(email: string, otp: string) {
   user.otp = null;
   user.otp_expires_at = null;
   await this.UserRepository.save(user);
+
+  // Before creating a new refresh token, delete any existing tokens for this user
+  await this.RefreshTokenRepository.delete({ user: { id: user.id } });
+  
   // Generate JWT tokens
   const payload = { email: user.email, sub: user.id };
   const accessToken = this.jwtService.sign(payload);
@@ -121,16 +125,13 @@ async login(createLoginDto: LoginDto) {
   if (!user.is_verified) {
     throw new HttpException('Account not verified. Please verify your email first.', HttpStatus.FORBIDDEN);
   }
-
   // Generate OTP and save
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
   user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
   await this.UserRepository.save(user);
-
   // Send OTP email
   await this.mailService.sendOtpEmail(user.email, otp);
-
   return {
     message: 'OTP sent to your email. Please verify to complete login.'
   };

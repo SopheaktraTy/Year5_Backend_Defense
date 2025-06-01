@@ -7,7 +7,7 @@ export class CartItem {
 @PrimaryGeneratedColumn('uuid')
 id: string;
 
-@ManyToOne(() => Cart,{ onDelete: 'CASCADE' })
+@ManyToOne(() => Cart, cart => cart.cartItems, { onDelete: 'CASCADE' })
 @JoinColumn({ name: 'cart_id' })
 cart: Cart;
 
@@ -17,6 +17,9 @@ product: Product;
 
 @Column('int')
 quantity: number;
+
+@Column()
+size: string;
 
 @Column('float')
 price_at_added: number;

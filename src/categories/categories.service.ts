@@ -14,22 +14,32 @@ export class CategoriesService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<{ message: string; category: Category }> {
-  try {
-    const existingCategory = await this.categoryRepository.findOne({ where: { name: createCategoryDto.name } });
-    if (existingCategory) {
-      throw new ConflictException(`Category with name "${createCategoryDto.name}" already exists.`);
+    try {
+      const existingCategory = await this.categoryRepository.findOne({
+        where: { category_name: createCategoryDto.categoryName },
+      });
+      if (existingCategory) {
+        throw new ConflictException(`Category with name "${createCategoryDto.categoryName}" already exists.`);
+      }
+  
+      // Map categoryName (DTO) to category_name (entity)
+      const category = this.categoryRepository.create({
+        category_name: createCategoryDto.categoryName,
+        image: createCategoryDto.image,
+        description: createCategoryDto.description,
+      });
+  
+      const savedCategory = await this.categoryRepository.save(category);
+      return {
+        message: 'Category created successfully',
+        category: savedCategory,
+      };
+    } catch (error) {
+      console.error('Create category error:', error);
+      throw error;
     }
-    const category = this.categoryRepository.create(createCategoryDto);
-    const savedCategory = await this.categoryRepository.save(category);
-    return {
-      message: 'Category created successfully',
-      category: savedCategory,
-    };
-  } catch (error) {
-    console.error('Create category error:', error);
-    throw error;
   }
-}
+  
 
 
   async findAll(): Promise<Category[]> {
@@ -48,19 +58,25 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{ message: string; category: Category }> {
-    const category = await this.categoryRepository.preload({
-      id,
-      ...updateCategoryDto,
-    });
-    if (!category) {
-      throw new NotFoundException(`Category with ID "${id}" not found.`);
+    try {
+      const category = await this.categoryRepository.preload({
+        id,
+        ...updateCategoryDto,
+      });
+      if (!category) {
+        throw new NotFoundException(`Category with ID "${id}" not found.`);
+      }
+      const savedCategory = await this.categoryRepository.save(category);
+      return {
+        message: 'Category updated successfully',
+        category: savedCategory,
+      };
+    } catch (error) {
+      console.error('Update category error:', error);
+      throw error;
     }
-    const savedCategory = await this.categoryRepository.save(category);
-    return {
-      message: 'Category updated successfully',
-      category: savedCategory,
-    };
   }
+  
 
  async remove(id: string): Promise<{ message: string }> {
   const category = await this.findOne(id);

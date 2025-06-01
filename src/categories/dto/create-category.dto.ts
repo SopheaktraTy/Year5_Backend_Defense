@@ -4,7 +4,7 @@ import { IsString, IsOptional } from 'class-validator';
 export class CreateCategoryDto {
 @ApiProperty({ example: 'Clothes', description: 'Category name' })
 @IsString()
-name: string;
+categoryName: string;
 
 @ApiProperty({
 example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...',

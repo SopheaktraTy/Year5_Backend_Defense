@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, ManyToOne} from 'typeorm';
 import { IsOptional, Min, Max } from 'class-validator';
 import { Category } from '../../categories/entities/category.entity';
-import { ProductVariable } from './product_variables.entity';
+import { ProductVariable } from './product_variable.entity';
 
 @Entity('products')
 export class Product {
@@ -13,7 +13,7 @@ export class Product {
 
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;  // Product name
+  product_name: string;  // Product name
 
   @Column({ nullable: true, type: 'varchar', length: 255 })
   image: string;  // Optional product picture URL
@@ -25,7 +25,7 @@ export class Product {
   original_price: number;  // Product original price
 
   @Column('float', { nullable: true, default: null })
-  discounted_price: number;  // Product discounted price
+  discounted_price: number | null;  // Product discounted price
 
   @Column({ type: 'int', default: 0 })
   total_quantity: number;
@@ -43,5 +43,5 @@ export class Product {
   updated_at: Date; // Timestamp for the last product update
 
   @OneToMany(() => ProductVariable, (product_variable) => product_variable.product, { cascade: true })
-  productVariables: ProductVariable[];
+  product_variables: ProductVariable[];
 }

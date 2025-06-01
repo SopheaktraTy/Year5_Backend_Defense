@@ -1,5 +1,5 @@
 // app-modules.config.ts
-import { ProductModule } from '../products/product.module';
+import { ProductModule } from '../products/products.module';
 import { RolesModule } from '../roles/roles.module';
 import { AuthModule } from '../auth/auth.module';
 import { MailModule } from '../services/mail.module';

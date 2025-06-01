@@ -10,7 +10,7 @@ id: string;
 image: string;
 
 @Column({ type: 'varchar', length: 255 })
-name: string;
+category_name: string;
 
 @Column({ nullable: true, type: 'varchar', length: 255 })
 description: string; // Optional category description
