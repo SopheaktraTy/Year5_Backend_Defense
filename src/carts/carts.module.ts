@@ -8,12 +8,13 @@ import { Product } from '../products/entities/product.entity';
 import { User } from '../auth/entities/user.entity';
 import { JwtModule, } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { jwtConfig } from '../config/jwt.config'; 
+import { jwtConfig } from '../config/jwt.config';
 import { ProductVariable } from '../products/entities/product_variable.entity';
+import { Order } from 'src/orders/entities/order.entity';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cart, CartItem, Product, User, ProductVariable]),
+  imports: [TypeOrmModule.forFeature([Cart, CartItem, Product, User, ProductVariable, Order]),
   JwtModule.registerAsync({
       imports: [ConfigModule], // Import ConfigModule to access environment variables
       useFactory: async (configService: ConfigService) => jwtConfig(configService), // Call jwtConfig to configure JWT
