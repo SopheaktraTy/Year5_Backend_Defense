@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Put, UseGuards, Req} from '@nestjs/common';
+import { Controller, Post, Body, Put, UseGuards, Req, HttpCode, HttpStatus} from '@nestjs/common';
 import { AuthService } from './auth.service';
 /**/
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -59,8 +59,20 @@ export class AuthController {
     async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
       return this.authService.forgetPassword(forgotPasswordDto.email)
     }
+  @ApiBearerAuth('Access-Token')
+  @UseGuards(AuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+    async logout(@Req() req: Request) {
+    const userId = (req as any).user?.id; // assuming your AuthGuard sets req.user
+    return this.authService.logout(userId);
 }
+}  
 
+
+
+ 
+  
 
   // TODO: Logout
 
