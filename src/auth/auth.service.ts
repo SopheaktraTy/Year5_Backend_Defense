@@ -139,7 +139,7 @@ async login(createLoginDto: LoginDto) {
 }
 
 
-/* refreshTokens and Generate refresh new access Token and refresh token */
+/*------------ refreshTokens and Generate refresh new access Token and refresh token ------------*/
 async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   // 1. Find the old token with user relation
   const storedToken = await this.RefreshTokenRepository.findOne({
@@ -177,8 +177,7 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   };
 }
 
-
-/* changePassword */
+/*------------ changePassword ------------*/
 async changePassword(userId: string, oldPassword: string, newPassword: string) {
   // Find the user by ID
   const user = await this.UserRepository.findOneBy({ id: userId });
@@ -202,41 +201,41 @@ async changePassword(userId: string, oldPassword: string, newPassword: string) {
   return { message: 'Password changed successfully' };
   }
 
-  /* forgetPassword */
-  async forgetPassword(email: string) {
-    // 1. Find user by email
-    const user = await this.UserRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    // 2. Delete all expired reset tokens for this user (expired before now)
-    await this.ResetTokenRepository.delete({
-      user: { id: user.id },
-      expires_at: LessThan(new Date()),
-    });
-    // 3. Generate reset token
-    const resetToken = uuidv4();
-    const resetTokenEntity = this.ResetTokenRepository.create({
-      reset_token: resetToken,
-      user,
-      expires_at: new Date(Date.now() + 15 * 60 * 1000), // expires in 15 minutes
-    });
-    await this.ResetTokenRepository.save(resetTokenEntity);
-    // 4. Send email using MailService (passing token only)
-    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
-    return { message: 'Reset password link sent to your email' };
+  /*------------ forgetPassword ------------*/
+async forgetPassword(email: string) {
+  // 1. Find user by email
+  const user = await this.UserRepository.findOne({ where: { email } });
+  if (!user) {
+    throw new NotFoundException('User not found');
   }
-
-  /* logout */
-  async logout(userId: string): Promise<{ message: string }> {
-    // Delete all refresh tokens associated with the user
-    const tokens = await this.RefreshTokenRepository.find({ where: { user: { id: userId } } });
-if (tokens.length) {
-  await this.RefreshTokenRepository.remove(tokens);
+  // 2. Delete all expired reset tokens for this user (expired before now)
+  await this.ResetTokenRepository.delete({
+    user: { id: user.id },
+    expires_at: LessThan(new Date()),
+  });
+  // 3. Generate reset token
+  const resetToken = uuidv4();
+  const resetTokenEntity = this.ResetTokenRepository.create({
+    reset_token: resetToken,
+    user,
+    expires_at: new Date(Date.now() + 15 * 60 * 1000), // expires in 15 minutes
+  });
+  await this.ResetTokenRepository.save(resetTokenEntity);
+  // 4. Send email using MailService (passing token only)
+  await this.mailService.sendPasswordResetEmail(user.email, resetToken);
+  return { message: 'Reset password link sent to your email' };
 }
 
-  
-    return { message: 'Logged out successfully' };
-  }
-  
+/* logout */
+async logout(userId: string): Promise<{ message: string }> {
+  // Delete all refresh tokens associated with the user
+  const tokens = await this.RefreshTokenRepository.find({ where: { user: { id: userId } } });
+if (tokens.length) {
+await this.RefreshTokenRepository.remove(tokens);
+}
+
+
+  return { message: 'Logged out successfully' };
+}
+
 }

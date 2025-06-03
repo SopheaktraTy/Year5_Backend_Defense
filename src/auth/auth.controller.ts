@@ -69,14 +69,6 @@ export class AuthController {
 }
 }  
 
-
-
- 
-  
-
-  // TODO: Logout
-
-
   // TODO: Get User Profile
 
   // TODO: Update User Profile

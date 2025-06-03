@@ -49,14 +49,5 @@ export class CartsController {
     const userId = this.getUserId(request);
     return this.cartsService.removeCartItem(userId, cartItemId);
   }
-
 }
 
-  // @Delete('product/:productId')
-  // removeProduct(
-  //   @Param('productId', ParseUUIDPipe) productId: string,
-  //   @Req() request: Request,
-  // ) {
-  //   const userId = this.getUserId(request);
-  //   return this.cartsService.remove(userId, productId);
-  // }

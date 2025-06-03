@@ -12,40 +12,40 @@ export class CategoriesService {
     @InjectRepository(Category)private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Product) private productRepository: Repository<Product>,
   ) {}
-
-  async create(createCategoryDto: CreateCategoryDto): Promise<{ message: string; category: Category }> {
-    try {
-      const existingCategory = await this.categoryRepository.findOne({
-        where: { category_name: createCategoryDto.categoryName },
-      });
-      if (existingCategory) {
-        throw new ConflictException(`Category with name "${createCategoryDto.categoryName}" already exists.`);
-      }
-  
-      // Map categoryName (DTO) to category_name (entity)
-      const category = this.categoryRepository.create({
-        category_name: createCategoryDto.categoryName,
-        image: createCategoryDto.image,
-        description: createCategoryDto.description,
-      });
-  
-      const savedCategory = await this.categoryRepository.save(category);
-      return {
-        message: 'Category created successfully',
-        category: savedCategory,
-      };
-    } catch (error) {
-      console.error('Create category error:', error);
-      throw error;
+/*------------  Create categories ------------*/
+async create(createCategoryDto: CreateCategoryDto): Promise<{ message: string; category: Category }> {
+  try {
+    const existingCategory = await this.categoryRepository.findOne({
+      where: { category_name: createCategoryDto.categoryName },
+    });
+    if (existingCategory) {
+      throw new ConflictException(`Category with name "${createCategoryDto.categoryName}" already exists.`);
     }
+
+    // Map categoryName (DTO) to category_name (entity)
+    const category = this.categoryRepository.create({
+      category_name: createCategoryDto.categoryName,
+      image: createCategoryDto.image,
+      description: createCategoryDto.description,
+    });
+
+    const savedCategory = await this.categoryRepository.save(category);
+    return {
+      message: 'Category created successfully',
+      category: savedCategory,
+    };
+  } catch (error) {
+    console.error('Create category error:', error);
+    throw error;
   }
+}
   
+/*------------  Get All categories ------------*/
+async findAll(): Promise<Category[]> {
+  return await this.categoryRepository.find({ relations: ['products'] });
+}
 
-
-  async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({ relations: ['products'] });
-  }
-
+/*------------  Get One categories ------------*/
   async findOne(id: string): Promise<Category> {
     const category = await this.categoryRepository.findOne({
       where: { id },
@@ -57,39 +57,40 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{ message: string; category: Category }> {
-    try {
-      const category = await this.categoryRepository.preload({
-        id,
-        ...updateCategoryDto,
-      });
-      if (!category) {
-        throw new NotFoundException(`Category with ID "${id}" not found.`);
-      }
-      const savedCategory = await this.categoryRepository.save(category);
-      return {
-        message: 'Category updated successfully',
-        category: savedCategory,
-      };
-    } catch (error) {
-      console.error('Update category error:', error);
-      throw error;
+/*------------  Update categories ------------*/
+async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{ message: string; category: Category }> {
+  try {
+    const category = await this.categoryRepository.preload({
+      id,
+      ...updateCategoryDto,
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with ID "${id}" not found.`);
     }
+    const savedCategory = await this.categoryRepository.save(category);
+    return {
+      message: 'Category updated successfully',
+      category: savedCategory,
+    };
+  } catch (error) {
+    console.error('Update category error:', error);
+    throw error;
   }
-  
+}
 
- async remove(id: string): Promise<{ message: string }> {
-  const category = await this.findOne(id);
+/*------------ Remove categories ------------*/
+async remove(id: string): Promise<{ message: string }> {
+const category = await this.findOne(id);
 
-  // Set category to null for all products having this category
-  await this.productRepository
-    .createQueryBuilder()
-    .update()
-    .set({ category: null })
-    .where('categoryId = :id', { id })
-    .execute();
-  // Now remove the category
-  await this.categoryRepository.remove(category);
-  return { message: 'Category removed successfully, and products updated' };
+// Set category to null for all products having this category
+await this.productRepository
+  .createQueryBuilder()
+  .update()
+  .set({ category: null })
+  .where('categoryId = :id', { id })
+  .execute();
+// Now remove the category
+await this.categoryRepository.remove(category);
+return { message: 'Category removed successfully, and products updated' };
 }
 }
