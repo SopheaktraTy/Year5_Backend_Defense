@@ -30,7 +30,7 @@ export class AuthService {
 
 
 
-/* Create a Signup or Create User */
+/*------------ Create a Signup or Create User ------------*/
 async signup(createAuthDto: SignupDto) {
   // 1. Check if email is already taken
   const existingUser = await this.UserRepository.findOne({ where: { email: createAuthDto.email } });
@@ -57,6 +57,7 @@ async signup(createAuthDto: SignupDto) {
   return { message: 'User registered successfully. Please verify your email using the code sent to you.' };
 }
 
+/*------------ resendVerifyOtp with email ------------*/
 async resendVerifyOtp(email: string) {
   const user = await this.UserRepository.findOne({ where: { email } });
   if (!user) {
@@ -72,7 +73,7 @@ async resendVerifyOtp(email: string) {
   return { message: 'The verification code has been resent to your email.' };
 }
 
-/* Create a Signup or Create User */
+/*------------ Create a Signup or Create User ------------*/
 async verifySignupLoginOtp(email: string, otp: string) {
   const user = await this.UserRepository.findOne({ where: { email } });
   if (!user) throw new HttpException('User account not found.', HttpStatus.BAD_REQUEST);
@@ -114,7 +115,7 @@ async verifySignupLoginOtp(email: string, otp: string) {
   };
 }
 
-/* Login and Generate JWT Token */
+/*------------ Login and Generate JWT Token ------------*/
 async login(createLoginDto: LoginDto) {
   const user = await this.UserRepository.findOne({ where: { email: createLoginDto.email } });
   if (!user) throw new HttpException('The provided credentials are incorrect.', HttpStatus.BAD_REQUEST);

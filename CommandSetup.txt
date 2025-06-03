@@ -32,3 +32,6 @@ npm install nodemailer
 
 #body-parser
 npm install body-parser
+
+#Run migrations
+npm run typeorm migration:run

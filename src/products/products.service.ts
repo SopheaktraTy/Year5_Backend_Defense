@@ -105,19 +105,14 @@ export class ProductsService {
   }
 
 /*------------ Update ------------*/
-  async update(
-  id: string,
-  updateProductDto: UpdateProductDto,
-): Promise<{ message: string; product?: Product }> {
+async update(id: string, updateProductDto: UpdateProductDto,): Promise<{ message: string; product?: Product }> {
   // Load existing product with relations
   const product = await this.productRepository.findOne({
     where: { id },
     relations: ['product_variables', 'category'],
   });
   if (!product) throw new NotFoundException('Product not found');
-
   const { productVariables, categoryId, productName, originalPrice, discountPercentageTag, ...rest } = updateProductDto;
-
   // Check for duplicate product name if changed
   if (productName && productName !== product.product_name) {
     const existing = await this.productRepository.findOne({ where: { product_name: productName } });
@@ -125,7 +120,6 @@ export class ProductsService {
       throw new BadRequestException(`Product with name "${productName}" already exists.`);
     }
   }
-
   // Update category or clear if null/empty
   if (categoryId !== undefined) {
     if (categoryId === null || categoryId === '') {
@@ -136,26 +130,28 @@ export class ProductsService {
       product.category = category;
     }
   }
-
-  // Update other product fields
-  Object.assign(product, {
-    product_name: productName,
-    original_price: originalPrice,
-    discount_percentage_tag: discountPercentageTag,
-    ...rest,
-  });
+  // Update fields only if provided
+  if (productName !== undefined) product.product_name = productName;
+  if (originalPrice !== undefined && originalPrice !== null) product.original_price = originalPrice;
+  if (discountPercentageTag !== undefined && discountPercentageTag !== null) {
+    product.discount_percentage_tag = discountPercentageTag;
+  }
+  Object.assign(product, rest);
 
   // Merge duplicate sizes and sum quantities before saving variables
   if (productVariables) {
-    const mergedVariables = productVariables.reduce<Record<string, { size: string; quantity: number }>>((acc, curr) => {
-      const sizeKey = curr.size.trim().toLowerCase();
-      if (acc[sizeKey]) {
-        acc[sizeKey].quantity += curr.quantity;
-      } else {
-        acc[sizeKey] = { size: curr.size, quantity: curr.quantity };
-      }
-      return acc;
-    }, {});
+    const mergedVariables = productVariables.reduce<Record<string, { size: string; quantity: number }>>(
+      (acc, curr) => {
+        const sizeKey = curr.size.trim().toLowerCase();
+        if (acc[sizeKey]) {
+          acc[sizeKey].quantity += curr.quantity;
+        } else {
+          acc[sizeKey] = { size: curr.size, quantity: curr.quantity };
+        }
+        return acc;
+      },
+      {},
+    );
 
     // Delete old product variables
     await this.productVariableRepository.delete({ product: { id } });
@@ -165,29 +161,26 @@ export class ProductsService {
       this.productVariableRepository.create(variable),
     );
   }
-
   // Calculate total quantity from variables
   product.total_quantity = product.product_variables
     ? product.product_variables.reduce((sum, pv) => sum + pv.quantity, 0)
     : 0;
-
-  // Calculate discounted price if discount is valid
+  // Calculate discounted price if discount and original price are valid
   if (
     typeof product.discount_percentage_tag === 'number' &&
     product.discount_percentage_tag >= 0 &&
-    product.discount_percentage_tag <= 100
+    product.discount_percentage_tag <= 100 &&
+    typeof product.original_price === 'number'
   ) {
     const discountFactor = (100 - product.discount_percentage_tag) / 100;
     product.discounted_price = parseFloat(
       (product.original_price * discountFactor).toFixed(2),
     );
   } else {
-    product.discounted_price = null;
+    product.discounted_price = product.original_price;
   }
-
   // Save updated product
   const updatedProduct = await this.productRepository.save(product);
-
   // Return response
   return {
     message: 'Product updated successfully!',
