@@ -27,7 +27,7 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
   // Find existing cart for user
   let cart = await this.cartsRepository.findOne({
     where: { user: { id: userId } },
-    relations: ['user', 'cartItems', 'cartItems.product'],
+    relations: ['user', 'cartItems', 'cartItems.product', 'cartItems.product.product_variables'], // Ensure product variables are loaded
   });
 
   if (!cart) {
@@ -55,10 +55,29 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
   for (const itemDto of createCartDto.items) {
     this.logger.log(`Processing item - productId: ${itemDto.productId}, quantity: ${itemDto.quantity}, size: ${itemDto.size}`);
 
-    const product = await this.productsRepository.findOne({ where: { id: itemDto.productId } });
+    const product = await this.productsRepository.findOne({
+      where: { id: itemDto.productId },
+      relations: ['product_variables'],  // Ensure product variables are loaded
+    });
     if (!product) {
       this.logger.error(`Product with id ${itemDto.productId} not found`);
       throw new NotFoundException(`Product with id ${itemDto.productId} not found`);
+    }
+
+    // Validate size and quantity with product variables
+    const productVariable = product.product_variables.find(
+      (variable) => variable.size.toLowerCase() === itemDto.size.trim().toLowerCase(),
+    );
+
+    if (!productVariable) {
+      this.logger.error(`Size "${itemDto.size}" not available for product ${itemDto.productId}`);
+      throw new BadRequestException(`Size "${itemDto.size}" not available for product ${itemDto.productId}`);
+    }
+
+    // Validate quantity against available stock for the size
+    if (itemDto.quantity > productVariable.quantity) {
+      this.logger.error(`Requested quantity exceeds available stock for size "${itemDto.size}"`);
+      throw new BadRequestException(`Requested quantity exceeds available stock for size "${itemDto.size}"`);
     }
 
     if (itemDto.quantity <= 0) {
@@ -66,6 +85,7 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
       throw new BadRequestException('Quantity must be greater than zero');
     }
 
+    // Create cart item
     const price = product.discounted_price ?? product.original_price;
 
     const cartItem = this.cartItemsRepository.create({
@@ -73,7 +93,7 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
       product,
       quantity: itemDto.quantity,
       size: itemDto.size,
-      price_at_added: price * itemDto.quantity,
+      price_at_cart: price * itemDto.quantity,
     });
 
     newItems.push(cartItem);
@@ -86,12 +106,14 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
   // Reload cart with relations and return
   const updatedCart = await this.cartsRepository.findOne({
     where: { id: cart.id },
-    relations: ['user', 'cartItems', 'cartItems.product'],
+    relations: ['user', 'cartItems', 'cartItems.product', 'cartItems.product.product_variables'],
   });
 
   this.logger.log(`Returning cart with id ${cart.id} for user ${userId}.`);
   return updatedCart!;
 }
+
+
 
 /*------------ Get all item in cart and update if product change ------------*/
 async findByUser(userId: string): Promise<Cart | null> {
@@ -114,9 +136,11 @@ async findByUser(userId: string): Promise<Cart | null> {
   if (orphanItemIds.length > 0) {
     this.logger.log(`Deleting ${orphanItemIds.length} cart items linked to deleted products.`);
     await this.cartItemsRepository.delete(orphanItemIds);
-    // Remove from local array so cart.cartItems is consistent
+    // Remove from local array to maintain consistency
     cart.cartItems = cart.cartItems.filter(item => item.product);
   }
+
+  const itemsToDelete: CartItem[] = []; // Explicitly typed as CartItem[]
 
   let priceUpdated = false;
 
@@ -125,22 +149,42 @@ async findByUser(userId: string): Promise<Cart | null> {
     const currentPrice = product.discounted_price ?? product.original_price;
     const expectedPriceAtAdded = currentPrice * item.quantity;
 
-    if (item.price_at_added !== expectedPriceAtAdded) {
-      item.price_at_added = expectedPriceAtAdded;
+    // Check if the product has changed
+    if (item.product.id !== product.id) {
+      itemsToDelete.push(item);
+    }
+
+    // Check if the price has changed
+    if (item.price_at_cart !== expectedPriceAtAdded) {
+      item.price_at_cart = expectedPriceAtAdded;
       priceUpdated = true;
     }
   }
+
+  // Delete cart items where the product has changed
+  if (itemsToDelete.length > 0) {
+    this.logger.log(`Deleting ${itemsToDelete.length} cart items due to product change.`);
+    const itemIdsToDelete = itemsToDelete.map(item => item.id); // TypeScript will now correctly infer item.id
+    await this.cartItemsRepository.delete(itemIdsToDelete);
+    // Remove from the local array so cart.cartItems remains consistent
+    cart.cartItems = cart.cartItems.filter(item => !itemsToDelete.includes(item)); // This will now work correctly
+  }
+
+  // Save the updated cart items if there were price updates
   if (priceUpdated) {
     await this.cartItemsRepository.save(cart.cartItems);
     this.logger.log(`Updated price_at_added for cart items in cart ${cart.id}`);
     return await this.cartsRepository.findOne({
       where: { id: cart.id },
-      relations: ['user', 'cartItems', 'cartItems.product']
+      relations: ['user', 'cartItems', 'cartItems.product'],
     });
   }
+
   this.logger.log(`No price update needed for cart ${cart.id}`);
   return cart;
 }
+
+
 
 /*------------ Update cart item in cart ------------*/
 async updateCartItem(
@@ -181,7 +225,7 @@ async updateCartItem(
 
   // Update price_at_added based on product price and new quantity
   const price = cartItem.product.discounted_price ?? cartItem.product.original_price;
-  cartItem.price_at_added = price * cartItem.quantity;
+  cartItem.price_at_cart = price * cartItem.quantity;
 
   // Save updated cart item
   await this.cartItemsRepository.save(cartItem);

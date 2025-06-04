@@ -1,46 +1,68 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ParseUUIDPipe, UseGuards, Req } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
-import { AuthGuard } from 'src/guards/authentication.guard';
-import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
+import { AuthGuard } from '../guards/authentication.guard'; // Ensure the AuthGuard is correctly imported
+import { Request } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@UseGuards(AuthGuard)
+
 @ApiBearerAuth('Access-Token')
+@ApiTags('orders')
+@UseGuards(AuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
-  private getUserId(request: Request): string {return (request as any).userId;}
+  constructor(private readonly orderService: OrdersService) {}
 
-  // @Post()
-  // create(@Req() request: Request, @Body() createOrderDto: CreateOrderDto) {
-  //   const userId = this.getUserId(request)
-  //   return this.ordersService.create(userId, createOrderDto);
-  // }
+  private getUserId(request: Request): string {
+    console.log('Decoded user on request:', (request as any).user);
+    return (request as any).user?.sub || (request as any).user?.id;
+  }
 
+  // Create an order for a user
+  @Post()
+  create(@Req() request: Request, @Body() createOrderDto: CreateOrderDto) {
+    const userId = this.getUserId(request);
+    return this.orderService.create(userId, createOrderDto);
+  }
 
-  // @Post()
-  //   create(@Req() request: Request, @Body() createCartDto: CreateCartDto) {
-  //     const userId = this.getUserId(request);
-  //     return this.cartsService.create(userId, createCartDto);
-  //   }
+  // // Get all orders for a user
   // @Get()
-  // findAll() {
-  //   return this.ordersService.findAll();
+  // async findOrdersByUser(@Req() request: Request) {
+  //   const userId = this.getUserId(request);
+  //   return this.orderService.findOrdersByUser(userId);
   // }
 
+  // // Get a specific order by its ID
   // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.ordersService.findOne(+id);
+  // @UseGuards(UserGuard)  // Ensuring the user is allowed to access this specific order
+  // async findOne(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Req() request: Request
+  // ) {
+  //   const userId = this.getUserId(request);
+  //   return this.orderService.findOrderById(id, userId);
   // }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-  //   return this.ordersService.update(+id, updateOrderDto);
+  // // Update an order by its ID
+  // @Put(':id')
+  // @UseGuards(UserGuard)  // Ensuring the user is allowed to update this specific order
+  // async update(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Body() updateOrderDto: UpdateOrderDto,
+  //   @Req() request: Request
+  // ) {
+  //   const userId = this.getUserId(request);
+  //   return this.orderService.updateOrder(id, userId, updateOrderDto);
   // }
 
+  // // Delete an order by its ID
   // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.ordersService.remove(+id);
-  // }
-}
+  // @UseGuards(UserGuard)  // Ensuring the user is allowed to delete this specific order
+  // async delete(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Req() request: Request
+  // ) {
+  //   const userId = this.getUserId(request);
+  //   return this.orderService.deleteOrder(id, userId);
+  }
+
