@@ -113,8 +113,6 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
   return updatedCart!;
 }
 
-
-
 /*------------ Get all item in cart and update if product change ------------*/
 async findByUser(userId: string): Promise<Cart | null> {
   this.logger.log(`Fetching cart for userId: ${userId}`);
@@ -183,8 +181,6 @@ async findByUser(userId: string): Promise<Cart | null> {
   this.logger.log(`No price update needed for cart ${cart.id}`);
   return cart;
 }
-
-
 
 /*------------ Update cart item in cart ------------*/
 async updateCartItem(
