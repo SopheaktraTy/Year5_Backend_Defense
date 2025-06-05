@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Product } from './product.entity';
 
 @Entity('product_variables')
@@ -12,13 +12,15 @@ export class ProductVariable {
   @Column({ type: 'int', default: 0 })
   quantity: number; // quantity of the product in this size
 
-  @ManyToOne(() => Product, (product) => product.product_variables)
-  @JoinColumn({ name: 'product_id' }) // Specify the foreign key column if needed
+  @ManyToOne(() => Product, (product) => product.product_variables, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
+  
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;  // Timestamp when the size was created
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date; // Automatically updates on every update operation
+  
 }

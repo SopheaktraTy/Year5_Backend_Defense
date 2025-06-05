@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, OneToMany, UpdateDateColumn } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { CartItem } from '../entities/cart_item.entity';
-import { Order } from 'src/orders/entities/order.entity';
 @Entity('carts')
 export class Cart {
 @PrimaryGeneratedColumn('uuid')
@@ -19,7 +18,4 @@ createdAt: Date;
 
 @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
 updatedAt: Date;
-
-@OneToMany(() => Order, (order) => order.cart)
-orders: Order[];
 }

@@ -8,8 +8,6 @@ import { ProductVariable } from '../products/entities/product_variable.entity';
 import { Product } from '../products/entities/product.entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Order } from '../orders/entities/order.entity';
-import { OrderItem } from '../orders/entities/order_item.entity';
 
 export const databaseConfig = async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
   type: 'postgres',
@@ -28,7 +26,5 @@ export const databaseConfig = async (configService: ConfigService): Promise<Type
     Cart,
     CartItem,
     Category,
-    Order,
-    OrderItem,
   ],
 });

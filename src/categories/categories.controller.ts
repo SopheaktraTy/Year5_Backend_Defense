@@ -17,18 +17,18 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
-  @Get(':categories_id')
+  @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id); // keep id as string (UUID)
+    return this.categoriesService.findOne(id);
   }
 
-  @Put(':categories_id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(id, updateCategoryDto); // keep id as string (UUID)
+    return this.categoriesService.update(id, updateCategoryDto);
   }
 
-  @Delete(':cateogries_id')
+  @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.categoriesService.remove(id); // keep id as string (UUID)
+    return this.categoriesService.remove(id);
   }
 }

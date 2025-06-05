@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Cart } from './/cart.entity';           // adjust import path
 import { Product } from '../../products/entities/product.entity';     // adjust import path
-import { ProductVariable } from '../../products/entities/product_variable.entity'; // adjust import path
 
 @Entity('cart_items')
 export class CartItem {
@@ -15,10 +14,6 @@ cart: Cart;
 @ManyToOne(() => Product,{ onDelete: 'SET NULL' })
 @JoinColumn({ name: 'product_id' })
 product: Product;
-
-@ManyToOne(() => ProductVariable, { nullable: true })
-@JoinColumn({ name: 'product_variable_id' })
-product_variable: ProductVariable | null;
 
 @Column('int')
 quantity: number;

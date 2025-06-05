@@ -3,18 +3,18 @@ import { Product } from '../../products/entities/product.entity';
 
 @Entity()
 export class Category {
-@PrimaryGeneratedColumn('uuid')
-id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-@Column({ nullable: true, type: 'text' }) // Use text for large base64 string
-image: string;
+  @Column()
+  category_name: string; // Matches categoryName in DTO
 
-@Column({ type: 'varchar', length: 255 })
-category_name: string;
+  @Column({ nullable: true })
+  image: string; // Make sure this property exists
 
-@Column({ nullable: true, type: 'varchar', length: 255 })
-description: string; // Optional category description
+  @Column({ nullable: true })
+  description: string; // Matches description in DTO
 
-@OneToMany(() => Product, product => product.category)
-products: Product[];
+  @OneToMany(() => Product, (product) => product.category)
+  products: Product[];
 }

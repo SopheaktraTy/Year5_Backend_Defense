@@ -41,6 +41,6 @@ export class Product {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date; // Timestamp for the last product update
 
-  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product, { cascade: true })
+  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product,)
   product_variables: ProductVariable[];
 }

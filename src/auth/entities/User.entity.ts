@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Cart } from '../../carts/entities/cart.entity';
-import { Order } from '../../orders/entities/order.entity';
 
 @Entity('users')
 export class User {
@@ -52,8 +51,5 @@ export class User {
 
   @OneToMany(() => Cart, (cart) => cart.user)
   carts: Cart[];
-
-  @OneToMany(() => Order, (order) => order.user)
-  orders: Order[];
 
 }

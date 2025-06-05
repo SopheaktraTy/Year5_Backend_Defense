@@ -13,40 +13,40 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
-  private getUserId(request: Request): string {
-    console.log('Decoded user on request:', (request as any).user);
-    return (request as any).user?.sub || (request as any).user?.id;
-  }
+  // private getUserId(request: Request): string {
+  //   console.log('Decoded user on request:', (request as any).user);
+  //   return (request as any).user?.sub || (request as any).user?.id;
+  // }
 
-  @Post()
-  create(@Req() request: Request, @Body() createCartDto: CreateCartDto) {
-    const userId = this.getUserId(request);
-    return this.cartsService.create(userId, createCartDto);
-  }
+  // @Post()
+  // create(@Req() request: Request, @Body() createCartDto: CreateCartDto) {
+  //   const userId = this.getUserId(request);
+  //   return this.cartsService.create(userId, createCartDto);
+  // }
 
-  @Get()
-  findByUser(@Req() request: Request) {
-    const userId = this.getUserId(request);
-    return this.cartsService.findByUser(userId);
-  }
+  // @Get()
+  // findByUser(@Req() request: Request) {
+  //   const userId = this.getUserId(request);
+  //   return this.cartsService.findByUser(userId);
+  // }
 
-  @Put(':cartItemId')
-  updateCartItem(
-    @Req() request: Request,
-    @Param('cartItemId') cartItemId: string,
-    @Body() updateCartItemDto: UpdateCartItemDto,
-  ) {
-    const userId = this.getUserId(request);
-    return this.cartsService.updateCartItem(userId, cartItemId, updateCartItemDto);
-  }
+  // @Put(':cartItemId')
+  // updateCartItem(
+  //   @Req() request: Request,
+  //   @Param('cartItemId') cartItemId: string,
+  //   @Body() updateCartItemDto: UpdateCartItemDto,
+  // ) {
+  //   const userId = this.getUserId(request);
+  //   return this.cartsService.updateCartItem(userId, cartItemId, updateCartItemDto);
+  // }
 
-  @Delete(':cartItemId')
-  removeCartItem(
-    @Req() request: Request,
-    @Param('cartItemId') cartItemId: string,
-  ) {
-    const userId = this.getUserId(request);
-    return this.cartsService.removeCartItem(userId, cartItemId);
-  }
+  // @Delete(':cartItemId')
+  // removeCartItem(
+  //   @Req() request: Request,
+  //   @Param('cartItemId') cartItemId: string,
+  // ) {
+  //   const userId = this.getUserId(request);
+  //   return this.cartsService.removeCartItem(userId, cartItemId);
+  // }
 }
 
