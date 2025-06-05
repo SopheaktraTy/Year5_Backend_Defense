@@ -59,15 +59,8 @@ export class AuthController {
     async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
       return this.authService.forgetPassword(forgotPasswordDto.email)
     }
-  @ApiBearerAuth('Access-Token')
-  @UseGuards(AuthGuard)
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-    async logout(@Req() req: Request) {
-    const userId = (req as any).user?.id; // assuming your AuthGuard sets req.user
-    return this.authService.logout(userId);
+
 }
-}  
 
   // TODO: Get User Profile
 
@@ -78,6 +71,6 @@ export class AuthController {
   // TODO: Get All Users
 
   // TODO: Get User by ID
-
+0
 
 

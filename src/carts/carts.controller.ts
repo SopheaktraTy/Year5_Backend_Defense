@@ -40,7 +40,6 @@ export class CartsController {
     return this.cartsService.updateCartItem(userId, cartItemId, updateCartItemDto);
   }
 
-  
   @Delete(':cartItemId')
   removeCartItem(
     @Req() request: Request,

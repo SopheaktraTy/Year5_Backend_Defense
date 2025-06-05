@@ -14,16 +14,16 @@ export class ProductController {
   async findAll() {
     return this.productService.findAll(); // Fetch products with sizes relation
   }
-  @Get(':id')
+  @Get(':product_id')
   async findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
   }
-  @Put(':id')
+  @Put(':product_id')
   async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
     return this.productService.update(id, updateProductDto);
   }
 
-  @Delete(':id')
+  @Delete(':product_id')
   async delete(@Param('id') id: string) {
     return this.productService.remove(id);
   }

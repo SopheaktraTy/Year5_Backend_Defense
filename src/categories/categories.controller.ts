@@ -17,17 +17,17 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
-  @Get(':id')
+  @Get(':categories_id')
   findOne(@Param('id') id: string) {
     return this.categoriesService.findOne(id); // keep id as string (UUID)
   }
 
-  @Put(':id')
+  @Put(':categories_id')
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
     return this.categoriesService.update(id, updateCategoryDto); // keep id as string (UUID)
   }
 
-  @Delete(':id')
+  @Delete(':cateogries_id')
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(id); // keep id as string (UUID)
   }

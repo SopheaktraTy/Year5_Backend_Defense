@@ -95,7 +95,7 @@ async verifySignupLoginOtp(email: string, otp: string) {
 
   // Before creating a new refresh token, delete any existing tokens for this user
   await this.RefreshTokenRepository.delete({ user: { id: user.id } });
-  
+
   // Generate JWT tokens
   const payload = { email: user.email, sub: user.id };
   const accessToken = this.jwtService.sign(payload);
@@ -226,16 +226,5 @@ async forgetPassword(email: string) {
   return { message: 'Reset password link sent to your email' };
 }
 
-/* logout */
-async logout(userId: string): Promise<{ message: string }> {
-  // Delete all refresh tokens associated with the user
-  const tokens = await this.RefreshTokenRepository.find({ where: { user: { id: userId } } });
-if (tokens.length) {
-await this.RefreshTokenRepository.remove(tokens);
-}
-
-
-  return { message: 'Logged out successfully' };
-}
 
 }

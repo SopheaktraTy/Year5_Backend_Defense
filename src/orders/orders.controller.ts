@@ -19,11 +19,11 @@ export class OrdersController {
   }
 
   // Create an order for a user
-  @Post()
-  create(@Req() request: Request, @Body() createOrderDto: CreateOrderDto) {
-    const userId = this.getUserId(request);
-    return this.orderService.create(userId, createOrderDto);
-  }
+  // @Post()
+  // create(@Req() request: Request, @Body() createOrderDto: CreateOrderDto) {
+  //   const userId = this.getUserId(request);
+  //   return this.orderService.create(userId, createOrderDto);
+  // }
 
   // // Get all orders for a user
   // @Get()

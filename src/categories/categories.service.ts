@@ -39,7 +39,6 @@ async create(createCategoryDto: CreateCategoryDto): Promise<{ message: string; c
     throw error;
   }
 }
-  
 /*------------  Get All categories ------------*/
 async findAll(): Promise<Category[]> {
   return await this.categoryRepository.find({ relations: ['products'] });

@@ -13,19 +13,18 @@ export class Product {
 
 
   @Column({ type: 'varchar', length: 255 })
-  product_name: string;  // Product name
+  product_name: string;
 
   @Column({ nullable: true, type: 'varchar', length: 255 })
-  image: string;  // Optional product picture URL
+  image: string;
 
   @Column({ nullable: true, type: 'text' })
-  description: string;  // Optional product description
+  description: string;
 
   @Column('float')
-  original_price: number;  // Product original price
-
+  original_price: number;
   @Column('float', { nullable: true, default: null })
-  discounted_price: number | null;  // Product discounted price
+  discounted_price: number | null;
 
   @Column({ type: 'int', default: 0 })
   total_quantity: number;

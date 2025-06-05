@@ -105,40 +105,53 @@ async findOne(id: string): Promise<Product> {
 }
 
 /*------------ Update a Product ------------*/
-async update(id: string, updateProductDto: UpdateProductDto,): Promise<{ message: string; product?: Product }> {
-  // Load existing product with relations
+async update(
+  id: string,
+  updateProductDto: UpdateProductDto,
+): Promise<{ message: string; product?: Product }> {
+  const { productVariables, categoryId, productName, originalPrice, discountPercentageTag, ...rest } = updateProductDto;
+
+  // Fetch the existing product by id with related product_variables
   const product = await this.productRepository.findOne({
     where: { id },
     relations: ['product_variables', 'category'],
   });
-  if (!product) throw new NotFoundException('Product not found');
-  const { productVariables, categoryId, productName, originalPrice, discountPercentageTag, ...rest } = updateProductDto;
-  // Check for duplicate product name if changed
+
+  if (!product) {
+    throw new NotFoundException('Product not found');
+  }
+
+  // Check if the product name is being changed and ensure it's unique
   if (productName && productName !== product.product_name) {
-    const existing = await this.productRepository.findOne({ where: { product_name: productName } });
-    if (existing && existing.id !== id) {
+    const existingProduct = await this.productRepository.findOne({ where: { product_name: productName } });
+    if (existingProduct) {
       throw new BadRequestException(`Product with name "${productName}" already exists.`);
     }
   }
-  // Update category or clear if null/empty
+
+  // Update category if the categoryId is provided
   if (categoryId !== undefined) {
     if (categoryId === null || categoryId === '') {
-      product.category = null;
+      product.category = null; // Clear the category if null/empty
     } else {
       const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
-      if (!category) throw new NotFoundException(`Category with id ${categoryId} not found`);
+      if (!category) {
+        throw new NotFoundException(`Category with id ${categoryId} not found`);
+      }
       product.category = category;
     }
   }
-  // Update fields only if provided
+
+  // Update other product fields if provided
   if (productName !== undefined) product.product_name = productName;
   if (originalPrice !== undefined && originalPrice !== null) product.original_price = originalPrice;
   if (discountPercentageTag !== undefined && discountPercentageTag !== null) {
     product.discount_percentage_tag = discountPercentageTag;
   }
+  
   Object.assign(product, rest);
 
-  // Merge duplicate sizes and sum quantities before saving variables
+  // Merge product variables by size and sum quantities if provided
   if (productVariables) {
     const mergedVariables = productVariables.reduce<Record<string, { size: string; quantity: number }>>(
       (acc, curr) => {
@@ -153,19 +166,24 @@ async update(id: string, updateProductDto: UpdateProductDto,): Promise<{ message
       {},
     );
 
-    // Delete old product variables
-    await this.productVariableRepository.delete({ product: { id } });
+    // Delete old product variables using QueryBuilder
+    await this.productVariableRepository.createQueryBuilder()
+      .delete()
+      .where('product_id = :id', { id }) // Use the correct foreign key reference
+      .execute();
 
     // Create new merged product variables
     product.product_variables = Object.values(mergedVariables).map(variable =>
       this.productVariableRepository.create(variable),
     );
   }
-  // Calculate total quantity from variables
+
+  // Calculate total quantity from the updated product variables
   product.total_quantity = product.product_variables
     ? product.product_variables.reduce((sum, pv) => sum + pv.quantity, 0)
     : 0;
-  // Calculate discounted price if discount and original price are valid
+
+  // Calculate discounted price if applicable
   if (
     typeof product.discount_percentage_tag === 'number' &&
     product.discount_percentage_tag >= 0 &&
@@ -179,26 +197,41 @@ async update(id: string, updateProductDto: UpdateProductDto,): Promise<{ message
   } else {
     product.discounted_price = product.original_price;
   }
-  // Save updated product
+
+  // Save the updated product
   const updatedProduct = await this.productRepository.save(product);
-  // Return response
+
   return {
     message: 'Product updated successfully!',
     product: updatedProduct,
   };
 }
 
+
+
 /*------------ Remove a Product ------------*/
 async remove(id: string): Promise<{ message: string }> {
+  // Fetch the product with its related product_variables
   const product = await this.productRepository.findOne({
     where: { id },
     relations: ['product_variables'],
   });
+
   if (!product) throw new NotFoundException('Product not found');
 
-  await this.productRepository.delete(id);
-  return { message: 'Product deleted successfully!' };
+  // Delete related product variables first
+  if (product.product_variables && product.product_variables.length > 0) {
+    // Delete all product variables related to the product
+    await this.productVariableRepository.remove(product.product_variables);
+  }
+
+  // Delete the product itself
+  await this.productRepository.remove(product);
+
+  return { message: 'Product and related product variables deleted successfully!' };
 }
+
+
 
 
 }

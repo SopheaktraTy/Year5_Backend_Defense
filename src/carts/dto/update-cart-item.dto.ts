@@ -1,25 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min, IsString } from 'class-validator';
+import { IsNumber, IsString, Min } from 'class-validator';
 
 export class UpdateCartItemDto {
-  @ApiProperty({
-    description: 'The quantity of the item in the cart',
-    type: Number,
-    example: 2,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt()
+  @ApiProperty({ description: 'Quantity of the product', example: 2 })
+  @IsNumber()
   @Min(1)
-  quantity?: number;
+  quantity: number;
 
-  @ApiProperty({
-    description: 'The size of the item (e.g., M, L, XL)',
-    type: String,
-    example: 'M',
-    required: false,
-  })
-  @IsOptional()
+  @ApiProperty({ description: 'Size of the product', example: 'M' })
   @IsString()
-  size?: string;
+  size: string;  // e.g., "S", "M", "L", "XL"
 }

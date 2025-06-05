@@ -16,9 +16,9 @@ cart: Cart;
 @JoinColumn({ name: 'product_id' })
 product: Product;
 
-@ManyToOne(() => ProductVariable, { onDelete: 'CASCADE' })
-@JoinColumn({ name: 'product_variable_id' }) // Reference to ProductVariable entity
-product_variable: ProductVariable;
+@ManyToOne(() => ProductVariable, { nullable: true })
+@JoinColumn({ name: 'product_variable_id' })
+product_variable: ProductVariable | null;
 
 @Column('int')
 quantity: number;

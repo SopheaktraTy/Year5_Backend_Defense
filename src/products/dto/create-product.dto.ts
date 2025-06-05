@@ -50,6 +50,7 @@ export class CreateProductDto {
     maximum: 100,
   })
   @IsOptional()
+   @IsNotEmpty()
   @Min(0)
   @Max(100)
   discountPercentageTag?: number;
@@ -59,7 +60,9 @@ export class CreateProductDto {
     type: [CreateProductVariableDto],
   })
   @IsArray()
+   @IsNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => CreateProductVariableDto)
   productVariables: CreateProductVariableDto[];
+
 }

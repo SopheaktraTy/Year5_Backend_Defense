@@ -12,7 +12,8 @@ export class ProductVariable {
   @Column({ type: 'int', default: 0 })
   quantity: number; // quantity of the product in this size
 
-  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Product, (product) => product.product_variables)
+  @JoinColumn({ name: 'product_id' }) // Specify the foreign key column if needed
   product: Product;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
