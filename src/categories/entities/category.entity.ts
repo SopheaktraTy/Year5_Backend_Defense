@@ -15,6 +15,6 @@ export class Category {
   @Column({ nullable: true })
   description: string; // Matches description in DTO
 
-  @OneToMany(() => Product, (product) => product.category)
+  @OneToMany(() => Product, product => product.category)
   products: Product[];
 }

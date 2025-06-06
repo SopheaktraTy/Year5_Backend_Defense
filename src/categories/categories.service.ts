@@ -46,22 +46,26 @@ export class CategoriesService {
     }
   }
 
-  /*------------ Get All categories ------------*/
-  async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({ relations: ['products'] });
+/*------------ Get All categories ------------*/
+async findAll(): Promise<Category[]> {
+  return await this.categoryRepository.find({
+    relations: ['products'], // Eager load the products with the category
+  });
+}
+
+/*------------ Get One category ------------*/
+async findOne(id: string): Promise<Category> {
+  const category = await this.categoryRepository.findOne({
+    where: { id },
+    relations: ['products'],
+  });
+
+  if (!category) {
+    throw new NotFoundException(`Category with ID "${id}" not found.`);
   }
 
-  /*------------ Get One category ------------*/
-  async findOne(id: string): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
-      where: { id },
-      relations: ['products'],
-    });
-    if (!category) {
-      throw new NotFoundException(`Category with ID "${id}" not found.`);
-    }
-    return category;
-  }
+  return category;
+}
 
   /*------------ Update category ------------*/
   async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{ message: string; category: Category }> {

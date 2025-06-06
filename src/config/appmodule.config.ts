@@ -7,8 +7,8 @@ import { CategoriesModule } from '../categories/categories.module';
 import { CartsModule } from '../carts/carts.module';
 
 export const appModules = [
-ProductModule,
 CategoriesModule,
+ProductModule,
 CartsModule,
 AuthModule,
 RolesModule,

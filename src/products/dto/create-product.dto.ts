@@ -50,19 +50,9 @@ export class CreateProductDto {
     maximum: 100,
   })
   @IsOptional()
-   @IsNotEmpty()
+  @IsNotEmpty()
   @Min(0)
   @Max(100)
   discountPercentageTag?: number;
-
-  @ApiProperty({
-    description: 'List of product size variants with quantities',
-    type: [CreateProductVariableDto],
-  })
-  @IsArray()
-   @IsNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => CreateProductVariableDto)
-  productVariables: CreateProductVariableDto[];
 
 }

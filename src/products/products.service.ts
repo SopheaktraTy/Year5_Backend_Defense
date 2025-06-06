@@ -16,7 +16,7 @@ export class ProductsService {
     @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  /*-----------------> Create a new product <-----------------*/ 
+  /*-----------------> Create a new product <-----------------*/
   async create(createProductDto: CreateProductDto): Promise<Product> {
     // Check if the category exists
     if (createProductDto.categoryId) {
@@ -35,7 +35,6 @@ export class ProductsService {
     // Calculate discounted price if discount percentage is provided
     let discountedPrice = createProductDto.originalPrice;
     const discountPercentage = createProductDto.discountPercentageTag ?? 0;
-
     if (discountPercentage > 0) {
       discountedPrice = createProductDto.originalPrice * (1 - discountPercentage / 100);
     }
@@ -94,14 +93,14 @@ export class ProductsService {
     return savedProduct;  // Return product with product variables
   }
 
-  /*-----------------> Find All Products <-----------------*/ 
+  /*-----------------> Find All Products <-----------------*/
   async findAll(): Promise<Product[]> {
     return this.productRepository.find({
       relations: ['product_variables', 'category'], // Optionally include related entities
     });
   }
 
-  /*----------------->  Find Product by ID: <-----------------*/ 
+  /*----------------->  Find Product by ID: <-----------------*/
   async findOne(id: string): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { id },
@@ -120,8 +119,8 @@ export class ProductsService {
     return product;
   }
 
-  /*----------------->  Update Product by ID: <-----------------*/ 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  /*----------------->  Update Product by ID: <-----------------*/
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Product }> {
     const product = await this.productRepository.findOne({ where: { id }, relations: ['product_variables'] });
 
     if (!product) {
@@ -168,11 +167,16 @@ export class ProductsService {
     product.total_quantity = totalQuantity;
 
     // Save updated product
-    return this.productRepository.save(product);
+    await this.productRepository.save(product);
+
+    return {
+      message: `Product with ID ${id} updated successfully`,
+      product, // Return the updated product
+    };
   }
 
-  /*----------------->  Delete Product by ID: <-----------------*/ 
-  async delete(id: string): Promise<void> {
+  /*----------------->  Delete Product by ID: <-----------------*/
+  async delete(id: string): Promise<{ message: string }> {
     const product = await this.productRepository.findOne({
       where: { id },
       relations: ['product_variables'], // Include related product variables
@@ -187,10 +191,12 @@ export class ProductsService {
 
     // Delete the product
     await this.productRepository.remove(product);
+
+    return { message: `Product with ID ${id} deleted successfully` };  // Return success message
   }
 
-  /*----------------->  Update Product variable by ID: <-----------------*/ 
-  async updateProductVariable(productId: string, variableId: string, updateProductVariableDto: CreateProductVariableDto): Promise<ProductVariable> {
+  /*----------------->  Update Product variable by ID: <-----------------*/
+  async updateProductVariable(productId: string, variableId: string, updateProductVariableDto: CreateProductVariableDto): Promise<{ message: string; productVariable: ProductVariable }> {
     const product = await this.productRepository.findOne({ where: { id: productId } });
 
     if (!product) {
@@ -208,11 +214,16 @@ export class ProductsService {
     // Update product variable
     Object.assign(productVariable, updateProductVariableDto);
 
-    return this.productVariableRepository.save(productVariable);
+    const updatedProductVariable = await this.productVariableRepository.save(productVariable);
+
+    return {
+      message: `Product variable with ID ${variableId} updated successfully`,
+      productVariable: updatedProductVariable,
+    };
   }
 
-  /*----------------->  Add Product variable by ID: <-----------------*/ 
-  async addProductVariable(productId: string, createProductVariableDto: CreateProductVariableDto): Promise<ProductVariable> {
+  /*----------------->  Add Product variable by ID: <-----------------*/
+  async addProductVariable(productId: string, createProductVariableDto: CreateProductVariableDto): Promise<{ message: string; productVariable: ProductVariable }> {
     const product = await this.productRepository.findOne({ where: { id: productId } });
 
     if (!product) {
@@ -225,11 +236,16 @@ export class ProductsService {
       product,
     });
 
-    return this.productVariableRepository.save(productVariable);
+    const savedProductVariable = await this.productVariableRepository.save(productVariable);
+
+    return {
+      message: `Product variable for product with ID ${productId} added successfully`,
+      productVariable: savedProductVariable,
+    };
   }
 
   /*----------------->  Delete Product Variable by ID: <-----------------*/ 
-  async deleteProductVariable(productId: string, variableId: string): Promise<void> {
+  async deleteProductVariable(productId: string, variableId: string): Promise<{ message: string }> {
     const product = await this.productRepository.findOne({
       where: { id: productId },
       relations: ['product_variables'], // Ensure we load the product's product variables
@@ -248,10 +264,12 @@ export class ProductsService {
 
     // Delete the product variable
     await this.productVariableRepository.remove(productVariable);
+
+    return { message: `Product variable with ID ${variableId} deleted successfully` };  // Return message
   }
 
   /*----------------->  Delete All Product Variables by Product ID: <-----------------*/ 
-  async deleteAllProductVariables(productId: string): Promise<void> {
+  async deleteAllProductVariables(productId: string): Promise<{ message: string }> {
     const product = await this.productRepository.findOne({
       where: { id: productId },
       relations: ['product_variables'], // Ensure we load all product variables
@@ -263,5 +281,7 @@ export class ProductsService {
 
     // Delete all associated product variables
     await this.productVariableRepository.remove(product.product_variables);
+
+    return { message: `All product variables for product with ID ${productId} deleted successfully` };  // Return message
   }
 }

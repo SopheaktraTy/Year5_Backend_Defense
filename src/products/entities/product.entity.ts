@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, ManyToOne} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, ManyToOne, JoinColumn} from 'typeorm';
 import { IsOptional, Min, Max } from 'class-validator';
 import { Category } from '../../categories/entities/category.entity';
 import { ProductVariable } from './product_variable.entity';
@@ -9,6 +9,7 @@ export class Product {
   id: string;
 
   @ManyToOne(() => Category, category => category.products, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'category_id' })
   category: Category | null;
 
 

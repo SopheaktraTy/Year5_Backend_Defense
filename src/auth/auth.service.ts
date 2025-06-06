@@ -4,7 +4,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginDto } from'./dto/login.dto';
 
 /*Entities*/
-import { User } from '../auth/entities/user.entity';
+import { User } from './entities/user.entity';
 import { RefreshToken } from './entities/refresh_token.entity'
 import { ResetToken } from './entities/reset_token.entity';
 /*Services*/

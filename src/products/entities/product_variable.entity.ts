@@ -12,15 +12,15 @@ export class ProductVariable {
   @Column({ type: 'int', default: 0 })
   quantity: number; // quantity of the product in this size
 
-  @ManyToOne(() => Product, (product) => product.product_variables, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'product_id' })
+  @ManyToOne(() => Product, (product) => product.product_variables ,{ onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'product_id' })  // Ensure the column name is 'product_id'
   product: Product;
-  
+
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;  // Timestamp when the size was created
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date; // Automatically updates on every update operation
-  
+
 }
