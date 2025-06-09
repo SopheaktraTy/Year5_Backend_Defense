@@ -5,7 +5,7 @@ import { Product } from './entities/product.entity';
 import { ProductVariable } from './entities/product_variable.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { CreateProductVariableDto } from './dto/create-product-variable.dto';
+import { CreateProductVariableDto } from './dto/create-product-variable.dto';  
 import { Category } from '../categories/entities/category.entity';
 
 @Injectable()
@@ -16,272 +16,234 @@ export class ProductsService {
     @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  /*-----------------> Create a new product <-----------------*/
-  async create(createProductDto: CreateProductDto): Promise<Product> {
-    // Check if the category exists
-    if (createProductDto.categoryId) {
-      const category = await this.categoryRepository.findOne({ where: { id: createProductDto.categoryId } });
-      if (!category) {
-        throw new NotFoundException('Category not found');
-      }
-    }
+/*-----------------> Create a new product: <-----------------*/
+async create(createProductDto: CreateProductDto): Promise<Product> {
 
-    // Ensure product name is unique
-    const existingProduct = await this.productRepository.findOne({ where: { product_name: createProductDto.productName } });
-    if (existingProduct) {
-      throw new BadRequestException('Product name already exists');
-    }
-
-    // Calculate discounted price if discount percentage is provided
-    let discountedPrice = createProductDto.originalPrice;
-    const discountPercentage = createProductDto.discountPercentageTag ?? 0;
-    if (discountPercentage > 0) {
-      discountedPrice = createProductDto.originalPrice * (1 - discountPercentage / 100);
-    }
-
-    // Create the product with the provided details
-    const product = this.productRepository.create({
-      product_name: createProductDto.productName,
-      image: createProductDto.image,
-      description: createProductDto.description,
-      original_price: createProductDto.originalPrice,
-      discounted_price: discountedPrice,
-      total_quantity: 0,  // Initialize total quantity, will calculate later
-      discount_percentage_tag: discountPercentage, // Store the discount percentage
-    });
-
-    // Save the product to get the ID
-    const savedProduct = await this.productRepository.save(product);
-
-    // Calculate total quantity and check for size duplication
-    let totalQuantity = 0;
-    for (const variable of createProductDto.productVariables) {
-      const normalizedSize = variable.size.toLowerCase();  // Normalize size to lowercase for case-insensitive comparison
-
-      // Check if the size already exists for the product (case-insensitive)
-      const existingSize = await this.productVariableRepository.findOne({
-        where: { size: normalizedSize, product: { id: savedProduct.id } },
-      });
-
-      if (existingSize) {
-        // If size already exists, merge the quantities
-        existingSize.quantity += variable.quantity; // Add the new quantity to the existing quantity
-        await this.productVariableRepository.save(existingSize);  // Save the updated variable
-      } else {
-        // If size does not exist, create a new product variable
-        const productVariable = this.productVariableRepository.create({
-          size: normalizedSize,  // Store the normalized (lowercase) size
-          quantity: variable.quantity,
-          product: savedProduct,
-        });
-
-        await this.productVariableRepository.save(productVariable);
-      }
-
-      totalQuantity += variable.quantity;  // Add to the total quantity
-    }
-
-    // Update total quantity of the product
-    savedProduct.total_quantity = totalQuantity;
-    await this.productRepository.save(savedProduct);
-
-    // Include product variables in the returned product object
-    savedProduct.product_variables = await this.productVariableRepository.find({
-      where: { product: { id: savedProduct.id } },
-    });
-
-    return savedProduct;  // Return product with product variables
+  // Ensure product name is provided
+  if (!createProductDto.productName) {
+    throw new BadRequestException('Product name is required');
   }
 
-  /*-----------------> Find All Products <-----------------*/
-  async findAll(): Promise<Product[]> {
-    return this.productRepository.find({
-      relations: ['product_variables', 'category'], // Optionally include related entities
-    });
+  if (createProductDto.originalPrice == null) {
+    throw new BadRequestException('Original price is required');
   }
 
-  /*----------------->  Find Product by ID: <-----------------*/
-  async findOne(id: string): Promise<Product> {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['product_variables', 'category'], // Include related entities
-    });
-
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
-
-    // Normalize the sizes for case-insensitive comparison
-    product.product_variables.forEach(variable => {
-      variable.size = variable.size.toLowerCase();
-    });
-
-    return product;
+  // 1. Check if the product name already exists
+  const existingProduct = await this.productRepository.findOne({
+    where: { product_name: createProductDto.productName },
+  });
+  if (existingProduct) {
+    throw new BadRequestException('Product name already exists');
   }
 
-  /*----------------->  Update Product by ID: <-----------------*/
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Product }> {
-    const product = await this.productRepository.findOne({ where: { id }, relations: ['product_variables'] });
-
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
-
-    // Ensure product name is unique if it's updated
-    if (updateProductDto.productName && updateProductDto.productName !== product.product_name) {
-      const existingProduct = await this.productRepository.findOne({
-        where: { product_name: updateProductDto.productName },
-      });
-
-      if (existingProduct) {
-        throw new BadRequestException('Product name already exists');
-      }
-    }
-
-    // Set originalPrice to the current price if it's not provided in updateProductDto
-    const originalPrice = updateProductDto.originalPrice ?? product.original_price;
-
-    // Calculate discounted price if discount percentage is provided
-    let discountedPrice = originalPrice;
-    const discountPercentage = updateProductDto.discountPercentageTag ?? 0;
-
-    if (discountPercentage > 0) {
-      discountedPrice = originalPrice * (1 - discountPercentage / 100);
-    }
-
-    // Ensure discountedPrice is always a valid number
-    discountedPrice = discountedPrice || 0; // Default to 0 if undefined
-
-    // Apply updates to the product
-    Object.assign(product, updateProductDto);
-    product.discounted_price = discountedPrice;
-
-    // Calculate total quantity and total price
-    let totalQuantity = 0;
-
-    for (const variable of product.product_variables) {
-      totalQuantity += variable.quantity;
-    }
-
-    // Update total quantity of the product
-    product.total_quantity = totalQuantity;
-
-    // Save updated product
-    await this.productRepository.save(product);
-
-    return {
-      message: `Product with ID ${id} updated successfully`,
-      product, // Return the updated product
-    };
-  }
-
-  /*----------------->  Delete Product by ID: <-----------------*/
-  async delete(id: string): Promise<{ message: string }> {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['product_variables'], // Include related product variables
+  // 2. Check if the category exists
+  let category: Category | null = null;
+  if (createProductDto.categoryId) {
+    category = await this.categoryRepository.findOne({
+      where: { id: createProductDto.categoryId },
     });
-
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    if (!category) {
+      throw new BadRequestException('Category does not exist');
     }
-
-    // Delete associated product variables if necessary
-    await this.productVariableRepository.remove(product.product_variables);
-
-    // Delete the product
-    await this.productRepository.remove(product);
-
-    return { message: `Product with ID ${id} deleted successfully` };  // Return success message
   }
 
-  /*----------------->  Update Product variable by ID: <-----------------*/
-  async updateProductVariable(productId: string, variableId: string, updateProductVariableDto: CreateProductVariableDto): Promise<{ message: string; productVariable: ProductVariable }> {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+  // 3. Merge duplicate product sizes (case insensitive)
+  const mergedVariables: CreateProductVariableDto[] = [];
+  const sizeMap = new Map<string, number>();
 
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
-    }
+  createProductDto.productVariables.forEach((variable) => {
+    const sizeKey = variable.size.toLowerCase(); // Case-insensitive check for merging
+    const existingQuantity = sizeMap.get(sizeKey) || 0; // Handle undefined value safely
+    sizeMap.set(sizeKey, existingQuantity + variable.quantity); // Merge quantity for the same size
+  });
 
-    const productVariable = await this.productVariableRepository.findOne({
-      where: { id: variableId, product: { id: productId } },
-    });
+  // 4. Preserve the original case for the size and push the merged variables
+  sizeMap.forEach((quantity, size) => {
+    const originalSize = createProductDto.productVariables.find(
+      (variable) => variable.size.toLowerCase() === size
+    )?.size;  // Find the original case-sensitive size
+    mergedVariables.push({ size: originalSize!, quantity });
+  });
 
-    if (!productVariable) {
-      throw new NotFoundException(`Product variable with ID ${variableId} not found for this product`);
-    }
+  // 5. Calculate the total quantity of the product
+  const totalQuantity = mergedVariables.reduce((sum, variable) => sum + variable.quantity, 0);
 
-    // Update product variable
-    Object.assign(productVariable, updateProductVariableDto);
-
-    const updatedProductVariable = await this.productVariableRepository.save(productVariable);
-
-    return {
-      message: `Product variable with ID ${variableId} updated successfully`,
-      productVariable: updatedProductVariable,
-    };
+  // 6. Calculate the discounted price if discountPercentageTag is provided
+  let discountedPrice = createProductDto.originalPrice;
+  if (createProductDto.discountPercentageTag) {
+    const discount = (createProductDto.discountPercentageTag / 100) * createProductDto.originalPrice;
+    discountedPrice = createProductDto.originalPrice - discount;
   }
 
-  /*----------------->  Add Product variable by ID: <-----------------*/
-  async addProductVariable(productId: string, createProductVariableDto: CreateProductVariableDto): Promise<{ message: string; productVariable: ProductVariable }> {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+  // 7. Create a new product entity
+  const newProduct = this.productRepository.create({
+    product_name: createProductDto.productName,
+    original_price: createProductDto.originalPrice,
+    discounted_price: discountedPrice,
+    total_quantity: totalQuantity,
+    discount_percentage_tag: createProductDto.discountPercentageTag, // Save the discount percentage tag
+    category, // Correctly assign the category
+    ...createProductDto,
+  });
 
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
-    }
+  // 8. Save the product
+  await this.productRepository.save(newProduct);
 
-    // Create and save new product variable (size variant)
+  // 9. Create and save the product variables (sizes)
+  for (const variable of mergedVariables) {
     const productVariable = this.productVariableRepository.create({
-      ...createProductVariableDto,
-      product,
+      size: variable.size,  // Save the size exactly as entered
+      quantity: variable.quantity,
+      product: newProduct,
     });
-
-    const savedProductVariable = await this.productVariableRepository.save(productVariable);
-
-    return {
-      message: `Product variable for product with ID ${productId} added successfully`,
-      productVariable: savedProductVariable,
-    };
+    await this.productVariableRepository.save(productVariable);
   }
 
-  /*----------------->  Delete Product Variable by ID: <-----------------*/ 
-  async deleteProductVariable(productId: string, variableId: string): Promise<{ message: string }> {
-    const product = await this.productRepository.findOne({
-      where: { id: productId },
-      relations: ['product_variables'], // Ensure we load the product's product variables
-    });
+  // 10. Fetch the product along with product variables and assert it's not null using findOneOrFail
+  return this.productRepository.findOneOrFail({
+    where: { id: newProduct.id },
+    relations: ['product_variables', 'category'],  // Use the camelCase 'productVariables' and category
+  });
+}
 
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
-    }
+/*-----------------> Get all products: <-----------------*/
+async findAll(): Promise<Product[]> {
+  return this.productRepository.find({
+    relations: ['product_variables', 'category'],  // Fetch related product variables as well
+  });
+}
 
-    // Find the specific product variable to delete
-    const productVariable = product.product_variables.find(variable => variable.id === variableId);
+/*-----------------> Get a single product by ID: <-----------------*/
+async findOne(productId: string): Promise<Product> {
+  // Ensure productId is a valid UUID (no quotes around it)
+  const validProductId = productId.replace(/"/g, '');  // Remove any extra quotes
 
-    if (!productVariable) {
-      throw new NotFoundException(`Product variable with ID ${variableId} not found for this product`);
-    }
+  const product = await this.productRepository.findOne({
+    where: { id: validProductId },
+    relations: ['product_variables', 'category'],
+  });
 
-    // Delete the product variable
-    await this.productVariableRepository.remove(productVariable);
-
-    return { message: `Product variable with ID ${variableId} deleted successfully` };  // Return message
+  if (!product) {
+    throw new NotFoundException('Product not found');
   }
 
-  /*----------------->  Delete All Product Variables by Product ID: <-----------------*/ 
-  async deleteAllProductVariables(productId: string): Promise<{ message: string }> {
-    const product = await this.productRepository.findOne({
-      where: { id: productId },
-      relations: ['product_variables'], // Ensure we load all product variables
+  return product;
+}
+
+
+
+
+/*-----------------> Update an existing product: <-----------------*/
+async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Product }> {
+  // 1. Ensure the product exists
+  const existingProduct = await this.productRepository.findOne({
+    where: { id: productId },
+    relations: ['product_variables'],  // Ensure we fetch product variables
+  });
+
+  if (!existingProduct) {
+    throw new NotFoundException('Product not found');
+  }
+
+  // 2. Check if the category exists (if provided)
+  let category: Category | null = null;
+  if (updateProductDto.categoryId) {
+    category = await this.categoryRepository.findOne({
+      where: { id: updateProductDto.categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+  }
+
+  // 3. Merge duplicate product sizes (case insensitive)
+  const mergedVariables: CreateProductVariableDto[] = [];
+  const sizeMap = new Map<string, number>();
+
+  // If there are productVariables in the update request, merge them
+  if (updateProductDto.productVariables && updateProductDto.productVariables.length > 0) {
+    // Merge quantities for the same size (case-insensitive)
+    updateProductDto.productVariables.forEach((variable) => {
+      const sizeKey = variable.size.toLowerCase(); // Case-insensitive check for merging
+      const existingQuantity = sizeMap.get(sizeKey) || 0; // Handle undefined value safely
+      sizeMap.set(sizeKey, existingQuantity + variable.quantity); // Merge quantity for the same size
     });
 
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
-    }
-
-    // Delete all associated product variables
-    await this.productVariableRepository.remove(product.product_variables);
-
-    return { message: `All product variables for product with ID ${productId} deleted successfully` };  // Return message
+    // Preserve the original case for the size and push the merged variables
+    sizeMap.forEach((quantity, size) => {
+      const originalSize = updateProductDto.productVariables?.find(
+        (variable) => variable.size.toLowerCase() === size
+      )?.size;  // Find the original case-sensitive size
+      mergedVariables.push({ size: originalSize!, quantity });
+    });
   }
+
+  // 4. If no new productVariables are provided, calculate total_quantity from existing product variables
+  const totalQuantity = mergedVariables.length > 0
+    ? mergedVariables.reduce((sum, variable) => sum + variable.quantity, 0) 
+    : existingProduct.product_variables.reduce((sum, variable) => sum + variable.quantity, 0);
+
+  // 5. Calculate the discounted price if discountPercentageTag is provided
+  let discountedPrice = existingProduct.original_price;
+  if (updateProductDto.discountPercentageTag) {
+    const discount = (updateProductDto.discountPercentageTag / 100) * existingProduct.original_price;
+    discountedPrice = existingProduct.original_price - discount;
+  }
+
+  // 6. Update the product entity with the new values
+  existingProduct.product_name = updateProductDto.productName ?? existingProduct.product_name;
+  existingProduct.image = updateProductDto.image ?? existingProduct.image;
+  existingProduct.description = updateProductDto.description ?? existingProduct.description;
+  existingProduct.discounted_price = discountedPrice;
+  existingProduct.total_quantity = totalQuantity;  // Update total quantity based on merged variables
+  existingProduct.discount_percentage_tag = updateProductDto.discountPercentageTag ?? existingProduct.discount_percentage_tag;  // Ensure it's saved
+  existingProduct.category = category ?? existingProduct.category;  // Ensure the category is updated
+
+  // 7. Save the updated product
+  await this.productRepository.save(existingProduct);
+
+  // 8. Update or create new product variables (sizes) as needed
+  for (const variable of mergedVariables) {
+    const existingProductVariable = existingProduct.product_variables.find(
+      (productVariable) => productVariable.size.toLowerCase() === variable.size.toLowerCase()
+    );
+
+    if (existingProductVariable) {
+      // If product variable already exists, update the quantity
+      existingProductVariable.quantity = variable.quantity;
+      await this.productVariableRepository.save(existingProductVariable);
+    } else {
+      // If product variable does not exist, create a new one
+      const newProductVariable = this.productVariableRepository.create({
+        size: variable.size,
+        quantity: variable.quantity,
+        product: existingProduct,
+      });
+      await this.productVariableRepository.save(newProductVariable);
+    }
+  }
+
+  // 9. Fetch the updated product along with product variables and return the result
+  const updatedProduct = await this.productRepository.findOneOrFail({
+    where: { id: existingProduct.id },
+    relations: ['product_variables', 'category'],  // Include product variables in the result
+  });
+
+  return { message: 'Product updated successfully', product: updatedProduct };
+}
+
+/*-----------------> Delete a product by ID: <-----------------*/
+async delete(productId: string): Promise<{ message: string }> {
+  const product = await this.productRepository.findOne({ where: { id: productId } });
+  if (!product) {
+    throw new NotFoundException('Product not found');
+  }
+
+  // Remove the product
+  await this.productRepository.remove(product);
+
+  return { message: 'Product deleted successfully' };
+}
+
+
 }

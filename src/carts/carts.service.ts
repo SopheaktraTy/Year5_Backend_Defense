@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger , ForbiddenException} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cart } from './entities/cart.entity';
@@ -15,13 +15,245 @@ export class CartsService {
   constructor(
     @InjectRepository(Cart) private cartsRepository: Repository<Cart>,
     @InjectRepository(CartItem) private cartItemsRepository: Repository<CartItem>,
-    @InjectRepository(Product) private productsRepository: Repository<Product>,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(ProductVariable) private productVariablesRepository: Repository<ProductVariable>,
+    @InjectRepository(Product) private productsRepository: Repository<Product>,
   ) {}
 
+  async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
+    // 1. Ensure user exists
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    // 2. Load or init cart
+    let cart = await this.cartsRepository.findOne({
+      where: { user: { id: userId } },
+      relations: [
+        'cart_items',
+        'cart_items.product_variable',
+        'cart_items.product_variable.product',
+      ],
+    });
+    if (!cart) {
+      cart = this.cartsRepository.create({ user });
+      await this.cartsRepository.save(cart);
+      cart = await this.cartsRepository.findOne({
+        where: { id: cart.id },
+        relations: [
+          'cart_items',
+          'cart_items.product_variable',
+          'cart_items.product_variable.product',
+        ],
+      });
+    }
+    if (!cart) throw new InternalServerErrorException('Failed to initialize cart');
+
+    // 3. Process each DTO item
+    for (const { productId, size, quantity } of createCartDto.items) {
+      const product = await this.productsRepository.findOne({ where: { id: productId } });
+      if (!product) throw new NotFoundException(`Product ${productId} not found`);
+
+      const variant = await this.productVariablesRepository.findOne({
+        where: { product: { id: productId }, size },
+        relations: ['product'],
+      });
+      if (!variant) {
+        throw new BadRequestException(
+          `Size "${size}" not available for product ${productId}`
+        );
+      }
+      if (variant.quantity < quantity) {
+        throw new BadRequestException(
+          `Only ${variant.quantity} in stock for product ${productId} size ${size}`
+        );
+      }
+
+      const unitPrice =
+        variant.product.discounted_price ?? variant.product.original_price;
+
+      // <-- use ?. on product_variable here -->
+      let item = cart.cart_items.find(
+        ci => ci.product_variable?.id === variant.id
+      );
+
+      if (item) {
+        const newQty = item.quantity + quantity;
+        if (newQty > variant.quantity) {
+          throw new BadRequestException(
+            `Cannot add ${quantity}; exceeds stock of ${variant.quantity}`
+          );
+        }
+        item.quantity = newQty;
+        item.price_at_cart = unitPrice * newQty;
+        await this.cartItemsRepository.save(item);
+      } else {
+        item = this.cartItemsRepository.create({
+          cart,
+          product,
+          product_variable: variant,
+          quantity,
+          size,
+          price_at_cart: unitPrice * quantity,
+        });
+        await this.cartItemsRepository.save(item);
+        cart.cart_items.push(item);
+      }
+    }
+
+    // 4. Return updated cart, with null-check
+    const updatedCart = await this.cartsRepository.findOne({
+      where: { id: cart.id },
+      relations: [
+        'cart_items',
+        'cart_items.product_variable',
+        'cart_items.product_variable.product',
+      ],
+    });
+    if (!updatedCart) {
+      throw new InternalServerErrorException('Cart not found after update');
+    }
+    return updatedCart;
+  }
 
 
+
+  async findByUser(userId: string): Promise<Cart> {
+    // ensure user exists
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    // load or create cart
+    let cart = await this.cartsRepository.findOne({
+      where: { user: { id: userId } },
+      relations: [
+        'cart_items',
+        'cart_items.product_variable',
+        'cart_items.product_variable.product',
+        'cart_items.product',
+      ],
+    });
+    if (!cart) {
+      cart = this.cartsRepository.create({ user });
+      await this.cartsRepository.save(cart);
+      cart = await this.cartsRepository.findOne({
+        where: { id: cart.id },
+        relations: [
+          'cart_items',
+          'cart_items.product_variable',
+          'cart_items.product_variable.product',
+          'cart_items.product',
+        ],
+      });
+    }
+    if (!cart) throw new InternalServerErrorException('Failed to load cart');
+
+    // cleanup: remove items whose product or variant was deleted/updated
+    for (const item of cart.cart_items) {
+      const prodExists = item.product
+        ? await this.productsRepository.findOne({ where: { id: item.product.id } })
+        : false;
+      const varExists = item.product_variable
+        ? await this.productVariablesRepository.findOne({ where: { id: item.product_variable.id } })
+        : false;
+      if (!prodExists || !varExists) {
+        await this.cartItemsRepository.remove(item);
+      }
+    }
+
+    // return fresh cart after cleanup
+    const updated = await this.cartsRepository.findOne({
+      where: { user: { id: userId } },
+      relations: [
+        'cart_items',
+        'cart_items.product_variable',
+        'cart_items.product_variable.product',
+        'cart_items.product',
+      ],
+    });
+    if (!updated) throw new InternalServerErrorException('Cart not found after cleanup');
+    return updated;
+  }
+
+
+async updateCartItem(
+  userId: string,
+  cartItemId: string,
+  dto: UpdateCartItemDto,
+): Promise<CartItem> {
+  // 1. Load the CartItem with its cart → user
+  const item = await this.cartItemsRepository.findOne({
+    where: { id: cartItemId },
+    relations: ['cart', 'cart.user', 'product_variable', 'product_variable.product'],
+  });
+  if (!item) {
+    throw new NotFoundException(`Cart item ${cartItemId} not found`);
+  }
+
+  // 2. Ensure ownership
+  if (item.cart.user.id !== userId) {
+    throw new ForbiddenException(`Cannot modify another user's cart item`);
+  }
+
+  // 3. CLEANUP STALE: if the underlying product_variable was deleted, remove this cart item
+  const variantExists = await this.productVariablesRepository.findOne({
+    where: { id: item.product_variable?.id },
+  });
+  if (!variantExists) {
+    await this.cartItemsRepository.remove(item);
+    throw new NotFoundException(
+      `Product variant no longer exists; cart item ${cartItemId} has been removed`
+    );
+  }
+
+  // 4. Find the (possibly new) variant by dto.size
+  const variant = await this.productVariablesRepository.findOne({
+    where: { product: { id: variantExists.product.id }, size: dto.size },
+    relations: ['product'],
+  });
+  if (!variant) {
+    throw new BadRequestException(
+      `Size "${dto.size}" not available for product ${variantExists.product.id}`
+    );
+  }
+
+  // 5. Check stock
+  if (dto.quantity > variant.quantity) {
+    throw new BadRequestException(
+      `Only ${variant.quantity} in stock for size ${dto.size}`
+    );
+  }
+
+  // 6. Recalculate line–total price
+  const unitPrice = variant.product.discounted_price ?? variant.product.original_price;
+  item.product_variable = variant;
+  item.size = dto.size;
+  item.quantity = dto.quantity;
+  item.price_at_cart = unitPrice * dto.quantity;
+
+  // 7. Persist and return
+  await this.cartItemsRepository.save(item);
+  return item;
+}
+
+
+async removeCartItem(userId: string, cartItemId: string): Promise<void> {
+  // 1. Load the cart item with its cart → user
+  const item = await this.cartItemsRepository.findOne({
+    where: { id: cartItemId },
+    relations: ['cart', 'cart.user', 'product', 'product_variable'],
+  });
+  if (!item) {
+    throw new NotFoundException(`Cart item ${cartItemId} not found`);
+  }
+
+  // 2. Ensure it belongs to the requesting user
+  if (item.cart.user.id !== userId) {
+    throw new ForbiddenException(`Cannot delete another user's cart item`);
+  }
+
+  // 3. Delete the cart item
+  await this.cartItemsRepository.remove(item);
+}
 }
 
 

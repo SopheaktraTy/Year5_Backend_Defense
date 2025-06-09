@@ -12,7 +12,6 @@ export class Product {
   @JoinColumn({ name: 'category_id' })
   category: Category | null;
 
-
   @Column({ type: 'varchar', length: 255 })
   product_name: string;
 
@@ -24,6 +23,7 @@ export class Product {
 
   @Column('float')
   original_price: number;
+  
   @Column('float', { nullable: true, default: null })
   discounted_price: number | null;
 
@@ -37,11 +37,11 @@ export class Product {
   discount_percentage_tag?: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;  // Timestamp when the product was created
+  created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date; // Timestamp for the last product update
-
-  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product,)
-  product_variables: ProductVariable[];
+  updated_at: Date;
+  
+  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product)
+  product_variables: ProductVariable[];  // Changed from 'product_variables' to 'productVariables'
 }

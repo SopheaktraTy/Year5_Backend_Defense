@@ -103,18 +103,16 @@ async findOne(id: string): Promise<Category> {
   /*------------ Remove category ------------*/
   async remove(id: string): Promise<{ message: string }> {
     const category = await this.findOne(id);
-
-    // Update all products associated with this category
-    await this.productRepository
-      .createQueryBuilder()
-      .update(Product)
-      .set({ category: null })
-      .where('categoryId = :id', { id })
-      .execute();
-
-    // Remove the category from the database
+  
+    // This will produce: UPDATE "products" SET "category_id" = NULL WHERE "category_id" = $1
+    await this.productRepository.update(
+      { category: { id } },      // find all products whose category.id = the given id
+      { category: null },        // set their category relation to null
+    );
+  
     await this.categoryRepository.remove(category);
-
+  
     return { message: 'Category removed successfully, and products updated' };
   }
+  
 }

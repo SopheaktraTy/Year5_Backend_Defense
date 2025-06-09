@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Product } from './product.entity';
+import { CartItem } from '../../carts/entities/cart_item.entity';
 
 @Entity('product_variables')
 export class ProductVariable {
@@ -16,6 +17,8 @@ export class ProductVariable {
   @JoinColumn({ name: 'product_id' })  // Ensure the column name is 'product_id'
   product: Product;
 
+  @OneToMany(() => CartItem, ci => ci.product_variable)
+  cart_items: CartItem[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;  // Timestamp when the size was created
