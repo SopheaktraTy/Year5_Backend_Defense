@@ -11,13 +11,14 @@ import { User } from './entities/user.entity';
 import { RefreshToken } from './entities/refresh_token.entity'
 import { ResetToken } from './entities/reset_token.entity';
 import { Cart } from '../carts/entities/cart.entity';
+import { CartItem } from 'src/carts/entities/cart_item.entity';
 
 
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Cart,]), // Import User repository
+    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Cart, CartItem]), // Import User repository
     JwtModule.registerAsync({
       imports: [ConfigModule], // Import ConfigModule to access environment variables
       useFactory: async (configService: ConfigService) => jwtConfig(configService), // Call jwtConfig to configure JWT

@@ -48,5 +48,11 @@ export class CartsController {
     const userId = this.getUserId(request);
     return this.cartsService.removeCartItem(userId, cartItemId);
   }
+
+  @Delete()
+  clearCart(@Req() request: Request) {
+    const userId = this.getUserId(request);
+    return this.cartsService.clearCart(userId);
+  }
 }
 

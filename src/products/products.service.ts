@@ -7,6 +7,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductVariableDto } from './dto/create-product-variable.dto';  
 import { Category } from '../categories/entities/category.entity';
+import { CartItem } from '../carts/entities/cart_item.entity';
 
 @Injectable()
 export class ProductsService {
@@ -14,6 +15,7 @@ export class ProductsService {
     @InjectRepository(Product) private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductVariable) private readonly productVariableRepository: Repository<ProductVariable>,
     @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(CartItem) private readonly cartItemRepository: Repository<CartItem>,
   ) {}
 
 /*-----------------> Create a new product: <-----------------*/
@@ -130,15 +132,12 @@ async findOne(productId: string): Promise<Product> {
   return product;
 }
 
-
-
-
 /*-----------------> Update an existing product: <-----------------*/
 async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ message: string; product: Product }> {
   // 1. Ensure the product exists
   const existingProduct = await this.productRepository.findOne({
     where: { id: productId },
-    relations: ['product_variables'],  // Ensure we fetch product variables
+    relations: ['product_variables', 'cart_items'],  // Fetch cart items to check if they exist
   });
 
   if (!existingProduct) {
@@ -160,60 +159,83 @@ async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ m
   const mergedVariables: CreateProductVariableDto[] = [];
   const sizeMap = new Map<string, number>();
 
-  // If there are productVariables in the update request, merge them
   if (updateProductDto.productVariables && updateProductDto.productVariables.length > 0) {
-    // Merge quantities for the same size (case-insensitive)
     updateProductDto.productVariables.forEach((variable) => {
-      const sizeKey = variable.size.toLowerCase(); // Case-insensitive check for merging
-      const existingQuantity = sizeMap.get(sizeKey) || 0; // Handle undefined value safely
-      sizeMap.set(sizeKey, existingQuantity + variable.quantity); // Merge quantity for the same size
+      const sizeKey = variable.size.toLowerCase();
+      const existingQuantity = sizeMap.get(sizeKey) || 0;
+      sizeMap.set(sizeKey, existingQuantity + variable.quantity);
     });
 
-    // Preserve the original case for the size and push the merged variables
     sizeMap.forEach((quantity, size) => {
       const originalSize = updateProductDto.productVariables?.find(
         (variable) => variable.size.toLowerCase() === size
-      )?.size;  // Find the original case-sensitive size
+      )?.size;
       mergedVariables.push({ size: originalSize!, quantity });
     });
   }
 
-  // 4. If no new productVariables are provided, calculate total_quantity from existing product variables
+  // 4. Calculate total quantity
   const totalQuantity = mergedVariables.length > 0
     ? mergedVariables.reduce((sum, variable) => sum + variable.quantity, 0) 
     : existingProduct.product_variables.reduce((sum, variable) => sum + variable.quantity, 0);
 
-  // 5. Calculate the discounted price if discountPercentageTag is provided
-  let discountedPrice = existingProduct.original_price;
-  if (updateProductDto.discountPercentageTag) {
-    const discount = (updateProductDto.discountPercentageTag / 100) * existingProduct.original_price;
+  // 5. Calculate the discounted price if necessary
+  let discountedPrice = existingProduct.discounted_price;
+  if (updateProductDto.originalPrice !== undefined && updateProductDto.originalPrice !== existingProduct.original_price) {
+    existingProduct.original_price = updateProductDto.originalPrice;
+    if (existingProduct.discount_percentage_tag !== undefined) {
+      const discount = (existingProduct.discount_percentage_tag / 100) * existingProduct.original_price;
+      discountedPrice = existingProduct.original_price - discount;
+    }
+  }
+
+  if (updateProductDto.discountPercentageTag !== undefined && updateProductDto.discountPercentageTag !== existingProduct.discount_percentage_tag) {
+    if (updateProductDto.discountPercentageTag < 0 || updateProductDto.discountPercentageTag > 100) {
+      throw new BadRequestException('Discount percentage must be between 0 and 100');
+    }
+    existingProduct.discount_percentage_tag = updateProductDto.discountPercentageTag;
+    const discount = (existingProduct.discount_percentage_tag / 100) * existingProduct.original_price;
     discountedPrice = existingProduct.original_price - discount;
   }
 
-  // 6. Update the product entity with the new values
+  // 6. Update the product with new values
   existingProduct.product_name = updateProductDto.productName ?? existingProduct.product_name;
   existingProduct.image = updateProductDto.image ?? existingProduct.image;
   existingProduct.description = updateProductDto.description ?? existingProduct.description;
   existingProduct.discounted_price = discountedPrice;
-  existingProduct.total_quantity = totalQuantity;  // Update total quantity based on merged variables
-  existingProduct.discount_percentage_tag = updateProductDto.discountPercentageTag ?? existingProduct.discount_percentage_tag;  // Ensure it's saved
-  existingProduct.category = category ?? existingProduct.category;  // Ensure the category is updated
+  existingProduct.total_quantity = totalQuantity;
+  existingProduct.category = category ?? existingProduct.category;
 
-  // 7. Save the updated product
+  // 7. Delete related CartItems if product or product variables are updated
+    if (existingProduct.product_variables.length > 0) {
+    for (const variable of existingProduct.product_variables) {
+      // Check if the product or product variant is being updated
+      const relatedCartItems = await this.cartItemRepository.find({
+        where: { product_variable: variable },
+      });
+
+      // Delete related CartItems for updated product variables
+      if (relatedCartItems.length > 0) {
+        await this.cartItemRepository.delete({
+          product_variable: variable,  // Delete cart items related to this product variant
+        });
+      }
+    }
+    }
+
+
+  // 8. Save the updated product and product variables
   await this.productRepository.save(existingProduct);
 
-  // 8. Update or create new product variables (sizes) as needed
   for (const variable of mergedVariables) {
     const existingProductVariable = existingProduct.product_variables.find(
       (productVariable) => productVariable.size.toLowerCase() === variable.size.toLowerCase()
     );
 
     if (existingProductVariable) {
-      // If product variable already exists, update the quantity
       existingProductVariable.quantity = variable.quantity;
       await this.productVariableRepository.save(existingProductVariable);
     } else {
-      // If product variable does not exist, create a new one
       const newProductVariable = this.productVariableRepository.create({
         size: variable.size,
         quantity: variable.quantity,
@@ -223,27 +245,67 @@ async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ m
     }
   }
 
-  // 9. Fetch the updated product along with product variables and return the result
+  // 9. Fetch the updated product with its variables and category
   const updatedProduct = await this.productRepository.findOneOrFail({
     where: { id: existingProduct.id },
-    relations: ['product_variables', 'category'],  // Include product variables in the result
+    relations: ['product_variables', 'category'],
   });
 
   return { message: 'Product updated successfully', product: updatedProduct };
 }
 
+
 /*-----------------> Delete a product by ID: <-----------------*/
 async delete(productId: string): Promise<{ message: string }> {
-  const product = await this.productRepository.findOne({ where: { id: productId } });
+  const product = await this.productRepository.findOne({
+    where: { id: productId },
+    relations: ['product_variables', 'cart_items'],  // Fetch related cart items
+  });
+
   if (!product) {
     throw new NotFoundException('Product not found');
   }
 
-  // Remove the product
+  // 1. Delete related CartItems using delete (by product id or product_variable)
+  if (product.cart_items && product.cart_items.length > 0) {
+    await this.cartItemRepository.delete({
+      product: product, // Delete by the associated product (or product_variable)
+    });
+  }
+
+  // 2. Remove the product
   await this.productRepository.remove(product);
 
   return { message: 'Product deleted successfully' };
 }
+
+/*-----------------> Delete a product variable by ID: <-----------------*/
+async deleteProductVariable(product_variableId: string): Promise<{ message: string }> {
+  const productVariable = await this.productVariableRepository.findOne({
+    where: { id: product_variableId },
+  });
+
+  if (!productVariable) {
+    throw new NotFoundException('Product variable not found');
+  }
+
+  // 1. Delete related CartItems using delete (by product_variable id)
+  const relatedCartItems = await this.cartItemRepository.find({
+    where: { product_variable: productVariable },
+  });
+
+  if (relatedCartItems.length > 0) {
+    await this.cartItemRepository.delete({
+      product_variable: productVariable,  // Delete related cart items by product variable
+    });
+  }
+
+  // 2. Remove the product variable
+  await this.productVariableRepository.remove(productVariable);
+
+  return { message: 'Product variable deleted successfully' };
+}
+
 
 
 }

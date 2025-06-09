@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, UpdateDateColumn, Ma
 import { IsOptional, Min, Max } from 'class-validator';
 import { Category } from '../../categories/entities/category.entity';
 import { ProductVariable } from './product_variable.entity';
+import { CartItem } from '../../carts/entities/cart_item.entity';
 
 @Entity('products')
 export class Product {
@@ -11,6 +12,9 @@ export class Product {
   @ManyToOne(() => Category, category => category.products, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'category_id' })
   category: Category | null;
+
+  @OneToMany(() => CartItem, cartItem => cartItem.product)  // Correct relation
+  cart_items: CartItem[];
 
   @Column({ type: 'varchar', length: 255 })
   product_name: string;

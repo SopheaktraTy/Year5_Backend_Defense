@@ -22,11 +22,11 @@ import {
     @JoinColumn({ name: 'cart_id' })
     cart: Cart;
   
-    @ManyToOne(() => Product, { onDelete: 'SET NULL', nullable: true })
+    @ManyToOne(() => Product, {  onDelete: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'product_id' })
     product?: Product;
   
-    @ManyToOne(() => ProductVariable, pv => pv.cart_items, { onDelete: 'SET NULL', nullable: true })
+    @ManyToOne(() => ProductVariable, pv => pv.cart_items, { onDelete: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'product_variable_id' })
     product_variable?: ProductVariable;
   

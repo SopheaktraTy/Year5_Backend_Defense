@@ -40,4 +40,10 @@ export class ProductController {
   async delete(@Param('productId') productId: string): Promise<{ message: string }> {
     return this.productService.delete(productId);
   }
+
+  /*-----------------> Delete a product variableId by ID: <-----------------*/
+  @Delete('variable/:variableId')
+  async deleteProductVariable(@Param('variableId') variableId: string) {
+    return this.productService.deleteProductVariable(variableId);
+  }
 }
