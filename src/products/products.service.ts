@@ -206,46 +206,52 @@ async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ m
   existingProduct.total_quantity = totalQuantity;
   existingProduct.category = category ?? existingProduct.category;
 
-  // 7. Delete related CartItems if product or product variables are updated
-    if (existingProduct.product_variables.length > 0) {
-    for (const variable of existingProduct.product_variables) {
-      // Check if the product or product variant is being updated
-      const relatedCartItems = await this.cartItemRepository.find({
-        where: { product_variable: variable },
+  // 7. Use transaction to delete related CartItems, update product, and product variables
+  await this.productRepository.manager.transaction(async (transactionalEntityManager) => {
+    // 7.1 Delete related CartItems for the current product (or its product variables)
+    if (existingProduct.cart_items.length > 0) {
+      await transactionalEntityManager.delete(CartItem, {
+        product: existingProduct, // Delete CartItems related to the product
       });
+    }
 
-      // Delete related CartItems for updated product variables
-      if (relatedCartItems.length > 0) {
-        await this.cartItemRepository.delete({
-          product_variable: variable,  // Delete cart items related to this product variant
+    // 7.2 Delete related CartItems for each product variable
+    if (existingProduct.product_variables.length > 0) {
+      for (const variable of existingProduct.product_variables) {
+        const relatedCartItems = await transactionalEntityManager.find(CartItem, {
+          where: { product_variable: variable },
         });
+
+        if (relatedCartItems.length > 0) {
+          await transactionalEntityManager.delete(CartItem, { product_variable: variable });
+        }
       }
     }
+
+    // 7.3 Save the updated product
+    await transactionalEntityManager.save(Product, existingProduct);
+
+    // 7.4 Update or create new product variables
+    for (const variable of mergedVariables) {
+      const existingProductVariable = existingProduct.product_variables.find(
+        (productVariable) => productVariable.size.toLowerCase() === variable.size.toLowerCase()
+      );
+
+      if (existingProductVariable) {
+        existingProductVariable.quantity = variable.quantity;
+        await transactionalEntityManager.save(ProductVariable, existingProductVariable);
+      } else {
+        const newProductVariable = transactionalEntityManager.create(ProductVariable, {
+          size: variable.size,
+          quantity: variable.quantity,
+          product: existingProduct,
+        });
+        await transactionalEntityManager.save(ProductVariable, newProductVariable);
+      }
     }
+  });
 
-
-  // 8. Save the updated product and product variables
-  await this.productRepository.save(existingProduct);
-
-  for (const variable of mergedVariables) {
-    const existingProductVariable = existingProduct.product_variables.find(
-      (productVariable) => productVariable.size.toLowerCase() === variable.size.toLowerCase()
-    );
-
-    if (existingProductVariable) {
-      existingProductVariable.quantity = variable.quantity;
-      await this.productVariableRepository.save(existingProductVariable);
-    } else {
-      const newProductVariable = this.productVariableRepository.create({
-        size: variable.size,
-        quantity: variable.quantity,
-        product: existingProduct,
-      });
-      await this.productVariableRepository.save(newProductVariable);
-    }
-  }
-
-  // 9. Fetch the updated product with its variables and category
+  // 8. Fetch the updated product with its variables and category
   const updatedProduct = await this.productRepository.findOneOrFail({
     where: { id: existingProduct.id },
     relations: ['product_variables', 'category'],
@@ -253,6 +259,7 @@ async update(productId: string, updateProductDto: UpdateProductDto): Promise<{ m
 
   return { message: 'Product updated successfully', product: updatedProduct };
 }
+
 
 
 /*-----------------> Delete a product by ID: <-----------------*/
@@ -266,18 +273,33 @@ async delete(productId: string): Promise<{ message: string }> {
     throw new NotFoundException('Product not found');
   }
 
-  // 1. Delete related CartItems using delete (by product id or product_variable)
-  if (product.cart_items && product.cart_items.length > 0) {
-    await this.cartItemRepository.delete({
-      product: product, // Delete by the associated product (or product_variable)
-    });
-  }
+  // Use transaction for consistency
+  await this.productRepository.manager.transaction(async (transactionalEntityManager) => {
+    // 1. Delete related CartItems using delete (by product id)
+    if (product.cart_items.length > 0) {
+      await transactionalEntityManager.delete(CartItem, { product: product });
+    }
 
-  // 2. Remove the product
-  await this.productRepository.remove(product);
+    // 2. Delete related CartItems for each product variable
+    if (product.product_variables.length > 0) {
+      for (const variable of product.product_variables) {
+        const relatedCartItems = await transactionalEntityManager.find(CartItem, {
+          where: { product_variable: variable },
+        });
+
+        if (relatedCartItems.length > 0) {
+          await transactionalEntityManager.delete(CartItem, { product_variable: variable });
+        }
+      }
+    }
+
+    // 3. Remove the product
+    await transactionalEntityManager.remove(Product, product);
+  });
 
   return { message: 'Product deleted successfully' };
 }
+
 
 /*-----------------> Delete a product variable by ID: <-----------------*/
 async deleteProductVariable(product_variableId: string): Promise<{ message: string }> {
@@ -289,23 +311,21 @@ async deleteProductVariable(product_variableId: string): Promise<{ message: stri
     throw new NotFoundException('Product variable not found');
   }
 
-  // 1. Delete related CartItems using delete (by product_variable id)
-  const relatedCartItems = await this.cartItemRepository.find({
-    where: { product_variable: productVariable },
-  });
-
-  if (relatedCartItems.length > 0) {
-    await this.cartItemRepository.delete({
-      product_variable: productVariable,  // Delete related cart items by product variable
+  // Use transaction for consistency
+  await this.productVariableRepository.manager.transaction(async (transactionalEntityManager) => {
+    // 1. Delete related CartItems using delete (by product_variable id)
+    const relatedCartItems = await transactionalEntityManager.find(CartItem, {
+      where: { product_variable: productVariable },
     });
-  }
 
-  // 2. Remove the product variable
-  await this.productVariableRepository.remove(productVariable);
+    if (relatedCartItems.length > 0) {
+      await transactionalEntityManager.delete(CartItem, { product_variable: productVariable });
+    }
+
+    // 2. Remove the product variable
+    await transactionalEntityManager.remove(ProductVariable, productVariable);
+  });
 
   return { message: 'Product variable deleted successfully' };
 }
-
-
-
 }
