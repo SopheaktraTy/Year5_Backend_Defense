@@ -127,7 +127,6 @@ export class CartsService {
     return updatedCart;
   }
 
-
   async findByUser(userId: string): Promise<Cart> {
     // Ensure user exists
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -262,7 +261,6 @@ export class CartsService {
   
     return updatedCart;
   }
-   
 
   async removeCartItem(userId: string, cartItemId: string): Promise<string> {
     // 1. Load the cart item with its cart → user
@@ -285,7 +283,6 @@ export class CartsService {
     // 4. Return success message
     return `Cart item ${cartItemId} has been successfully removed from your cart.`;
   }
-
 
   async clearCart(userId: string): Promise<string> {
     // 1. Find the cart for the user

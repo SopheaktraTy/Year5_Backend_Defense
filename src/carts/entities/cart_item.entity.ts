@@ -1,18 +1,8 @@
-// src/carts/entities/cart_item.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Cart } from './cart.entity';
+import { Product } from '../../products/entities/product.entity';
+import { ProductVariable } from '../../products/entities/product_variable.entity';
 
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    ManyToOne,
-    JoinColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-  } from 'typeorm';
-  import { Cart } from './cart.entity';
-  import { Product } from '../../products/entities/product.entity';
-  import { ProductVariable } from '../../products/entities/product_variable.entity';
-  
   @Entity('cart_items')
   export class CartItem {
     @PrimaryGeneratedColumn('uuid')

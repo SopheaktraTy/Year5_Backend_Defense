@@ -14,7 +14,6 @@ export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
   private getUserId(request: Request): string {
-    console.log('Decoded user on request:', (request as any).user);
     return (request as any).user?.sub || (request as any).user?.id;
   }
 

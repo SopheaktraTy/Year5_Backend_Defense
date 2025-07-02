@@ -8,6 +8,7 @@ import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
 
 import { JwtModule } from '@nestjs/jwt';
+import { OrdersModule } from './orders/orders.module';
 
 
 @Module({
@@ -29,6 +30,8 @@ import { JwtModule } from '@nestjs/jwt';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    OrdersModule,
 
   ],
   controllers: [],

@@ -12,7 +12,6 @@ import { jwtConfig } from '../config/jwt.config';
 import { ProductVariable } from '../products/entities/product_variable.entity';
 
 
-
 @Module({
   imports: [TypeOrmModule.forFeature([Cart, CartItem, Product, User, ProductVariable]),
   JwtModule.registerAsync({

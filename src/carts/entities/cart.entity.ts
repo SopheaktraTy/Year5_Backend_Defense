@@ -1,16 +1,6 @@
-// src/carts/entities/cart.entity.ts
-
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    ManyToOne,
-    OneToMany,
-    JoinColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-  } from 'typeorm';
-  import { User } from '../../auth/entities/user.entity';
-  import { CartItem } from './cart_item.entity';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { User } from '../../auth/entities/user.entity';
+import { CartItem } from './cart_item.entity';
   
   @Entity('carts')
   export class Cart {
