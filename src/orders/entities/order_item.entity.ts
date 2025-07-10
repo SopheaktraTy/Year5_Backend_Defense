@@ -1,7 +1,7 @@
 // src/orders/entities/order-item.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn, } from 'typeorm';
 import { Order } from './order.entity';
-import { CartItem } from '../../carts/entities/cart_item.entity';
+import { Product } from '../../products/entities/product.entity';
   
   @Entity('order_items')
   export class OrderItem {
@@ -12,9 +12,10 @@ import { CartItem } from '../../carts/entities/cart_item.entity';
     @JoinColumn({ name: 'order_id' })
     order: Order;
   
-    @ManyToOne(() => CartItem, { onDelete: 'SET NULL', nullable: true })
-    @JoinColumn({ name: 'cart_item_id' })
-    cart_item: CartItem;
+    @ManyToOne(() => Product, { onDelete: 'CASCADE', nullable: true })
+    @JoinColumn({ name: 'product_id' })
+    product: Product;
+    
   
     @Column({ type: 'int' })
     quantity: number;

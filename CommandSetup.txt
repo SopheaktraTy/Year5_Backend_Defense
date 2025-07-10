@@ -35,3 +35,6 @@ npm install body-parser
 
 #Run migrations
 npm run typeorm migration:run
+
+#Install Axios
+npm install axios

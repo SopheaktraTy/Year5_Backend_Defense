@@ -13,9 +13,6 @@ export class Product {
   @JoinColumn({ name: 'category_id' })
   category: Category | null;
 
-  @OneToMany(() => CartItem, cartItem => cartItem.product)  // Correct relation
-  cart_items: CartItem[];
-
   @Column({ type: 'varchar', length: 255 })
   product_name: string;
 
@@ -46,6 +43,6 @@ export class Product {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
   
-  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product)
-  product_variables: ProductVariable[];  // Changed from 'product_variables' to 'productVariables'
+  @OneToMany(() => ProductVariable, (product_variable) => product_variable.product, { cascade: true })
+  product_variables: ProductVariable[]; 
 }

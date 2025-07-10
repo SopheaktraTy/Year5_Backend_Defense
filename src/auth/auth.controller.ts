@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Put, UseGuards, Req, HttpCode, HttpStatus} from '@nestjs/common';
+import { Controller, Post, Body, Put, UseGuards, Req, HttpCode, HttpStatus, Get} from '@nestjs/common';
 import { AuthService } from './auth.service';
 /**/
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -47,30 +47,32 @@ export class AuthController {
   @ApiBearerAuth('Access-Token')
   @UseGuards(AuthGuard)
   @Put('change-password')
-  async changePassword(
-    @Body() ChangePasswordDto: ChangePasswordDto,
-    @Req() req) {
-    return this.authService.changePassword(
-      req.userId,
-      ChangePasswordDto.oldpassword,
-      ChangePasswordDto.newpassword);
+  async changePassword(@Body() ChangePasswordDto: ChangePasswordDto, @Req() req) {
+    return this.authService.changePassword( req.userId, ChangePasswordDto.oldpassword,ChangePasswordDto.newpassword);
   }
-    @Post('forgot-password')
-    async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
-      return this.authService.forgetPassword(forgotPasswordDto.email)
-    }
+  
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
+    return this.authService.forgetPassword(forgotPasswordDto.email)
+  }
+
+
+  @ApiBearerAuth('Access-Token')
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req) {
+    return this.authService.getProfile(req.userId);
 
 }
-
+}
+  
   // TODO: Get User Profile
 
   // TODO: Update User Profile
 
-  // TODO: Delete User Profile
-
   // TODO: Get All Users
 
   // TODO: Get User by ID
-0
+
 
 

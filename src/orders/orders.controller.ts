@@ -5,8 +5,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from '../guards/authentication.guard';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
-@UseGuards(AuthGuard)
-@ApiBearerAuth('Access-Token')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
@@ -15,9 +13,9 @@ export class OrdersController {
     const user = (request as any).user;
     return user?.sub || user?.id;
   }
-
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('Access-Token')
   @Post()
-  @ApiOperation({ summary: 'Create an order from a cart payload' })
   create(
     @Req() request: Request,
     @Body() createOrderDto: CreateOrderDto,) {
@@ -25,25 +23,26 @@ export class OrdersController {
     return this.ordersService.create(userId, createOrderDto);
   }
 
-  // @Get()
-  // @ApiOperation({ summary: 'Get all orders (admin use)' })
-  // findAll() {
-  //   return this.ordersService.findAll();
-  // }
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('Access-Token')
+  @Get('me')
+  findMyOrders(@Req() request: Request) {
+    const userId = this.getUserId(request);
+    return this.ordersService.findByUser(userId);
+  }
 
-  // @Get('me')
-  // @ApiOperation({ summary: 'Get current user’s orders' })
-  // findMyOrders(@Req() request: Request) {
-  //   const userId = this.getUserId(request);
-  //   return this.ordersService.findByUser(userId);
-  // }
+  @Get()
+  findAll() {
+    return this.ordersService.findAll();
+  }
 
-  // @Get(':orderId')
-  // @ApiOperation({ summary: 'Get a specific order by ID' })
-  // @ApiParam({ name: 'orderId', type: 'string' })
-  // findOne(@Param('orderId', ParseUUIDPipe) orderId: string) {
-  //   return this.ordersService.findOne(orderId);
-  // }
+  
+
+  @Get(':orderId')
+  @ApiParam({ name: 'orderId', type: 'string' })
+  findOne(@Param('orderId', ParseUUIDPipe) orderId: string) {
+    return this.ordersService.findOne(orderId);
+  }
 
   // @Delete(':orderId')
   // @ApiOperation({ summary: 'Cancel or delete an order by ID' })

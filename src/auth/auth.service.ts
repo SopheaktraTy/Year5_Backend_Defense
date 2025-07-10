@@ -7,6 +7,7 @@ import { LoginDto } from'./dto/login.dto';
 import { User } from './entities/user.entity';
 import { RefreshToken } from './entities/refresh_token.entity'
 import { ResetToken } from './entities/reset_token.entity';
+
 /*Services*/
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException, HttpStatus , NotFoundException, Injectable, UnauthorizedException, BadRequestException} from '@nestjs/common';
@@ -138,7 +139,6 @@ async login(createLoginDto: LoginDto) {
   };
 }
 
-
 /*------------ refreshTokens and Generate refresh new access Token and refresh token ------------*/
 async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   // 1. Find the old token with user relation
@@ -225,6 +225,5 @@ async forgetPassword(email: string) {
   await this.mailService.sendPasswordResetEmail(user.email, resetToken);
   return { message: 'Reset password link sent to your email' };
 }
-
-
 }
+

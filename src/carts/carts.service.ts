@@ -128,11 +128,11 @@ export class CartsService {
   }
 
   async findByUser(userId: string): Promise<Cart> {
-    // Ensure user exists
+    // 1. Ensure user exists
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
   
-    // Load or create cart
+    // 2. Load or create cart
     let cart = await this.cartsRepository.findOne({
       where: { user: { id: userId } },
       relations: [
@@ -146,6 +146,7 @@ export class CartsService {
     if (!cart) {
       cart = this.cartsRepository.create({ user });
       await this.cartsRepository.save(cart);
+  
       cart = await this.cartsRepository.findOne({
         where: { id: cart.id },
         relations: [
@@ -156,25 +157,40 @@ export class CartsService {
         ],
       });
     }
+  
     if (!cart) throw new InternalServerErrorException('Failed to load cart');
   
-    // Cleanup: remove items whose product or variant was deleted/updated
+    // 3. Cleanup: remove items with missing product or variant
     for (const item of cart.cart_items) {
-      const prodExists = item.product
-        ? await this.productsRepository.findOne({ where: { id: item.product.id } })
-        : null;
-      const varExists = item.product_variable
-        ? await this.productVariablesRepository.findOne({ where: { id: item.product_variable.id } })
+      const product = item.product;
+      const variant = item.product_variable;
+  
+      const prodExists = product
+        ? await this.productsRepository.findOne({ where: { id: product.id } })
         : null;
   
-      // If the product or product_variant no longer exists, remove the cart item
+      const varExists = variant
+        ? await this.productVariablesRepository.findOne({ where: { id: variant.id } })
+        : null;
+  
+      // Remove cart item if product or variant is deleted
       if (!prodExists || !varExists) {
         await this.cartItemsRepository.remove(item);
+        continue;
+      }
+  
+      // 4. Update price_at_cart with latest product price
+      const latestPrice = prodExists.discounted_price ?? prodExists.original_price;
+      const newPriceAtCart = latestPrice * item.quantity;
+  
+      if (item.price_at_cart !== newPriceAtCart) {
+        item.price_at_cart = newPriceAtCart;
+        await this.cartItemsRepository.save(item);
       }
     }
   
-    // Return fresh cart after cleanup
-    const updated = await this.cartsRepository.findOne({
+    // 5. Return refreshed cart
+    const updatedCart = await this.cartsRepository.findOne({
       where: { user: { id: userId } },
       relations: [
         'cart_items',
@@ -184,9 +200,9 @@ export class CartsService {
       ],
     });
   
-    if (!updated) throw new InternalServerErrorException('Cart not found after cleanup');
+    if (!updatedCart) throw new InternalServerErrorException('Cart not found after cleanup');
   
-    return updated;
+    return updatedCart;
   }
   
   async updateCartItem(userId: string, cartItemId: string, updateCartItemDto: UpdateCartItemDto): Promise<Cart> {
