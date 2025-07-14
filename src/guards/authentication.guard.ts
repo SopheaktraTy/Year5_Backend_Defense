@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { Observable } from 'rxjs';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthenticationGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   canActivate(
@@ -28,4 +28,3 @@ export class AuthGuard implements CanActivate {
     return request.headers.authorization?.split(' ')[1];
   }
 }
-

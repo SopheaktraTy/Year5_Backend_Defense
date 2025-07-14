@@ -1,23 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
-import axios from 'axios';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+
+interface TelegramConfig {
+  botToken: string;
+  chatId: string;
+}
 
 @Injectable()
 export class TelegramBotService {
   private readonly logger = new Logger(TelegramBotService.name);
-  private readonly telegramBotToken: string;
-  private readonly chatId: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
-    const chatId = this.configService.get<string>('TELEGRAM_CHAT_ID');
-
-    if (!token || !chatId) {
-      throw new Error('TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be defined!');
-    }
-
-    this.telegramBotToken = token;
-    this.chatId = chatId;
+  constructor(
+    @Inject('TELEGRAM_CONFIG') private readonly telegramConfig: TelegramConfig,
+  ) {
+    this.logger.log('TelegramBotService initialized with provided config.');
   }
 
   async sendOrderNotification(
@@ -37,17 +32,19 @@ export class TelegramBotService {
 🕒 _Created at:_ ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Phnom_Penh' })}
     `;
 
-    const url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
+    const url = `https://api.telegram.org/bot${this.telegramConfig.botToken}/sendMessage`;
 
     try {
-      await axios.post(url, {
-        chat_id: this.chatId,
+      // Use fetch or axios here, example with axios:
+      const axios = await import('axios');
+      await axios.default.post(url, {
+        chat_id: this.telegramConfig.chatId,
         text: message,
         parse_mode: 'Markdown',
       });
-      this.logger.log(`Sent order notification to Telegram bot for order ${orderId}`);
+      this.logger.log(`Sent order notification for order ${orderId}`);
     } catch (error) {
-      this.logger.error('Failed to send message to Telegram bot', error);
+      this.logger.error('Failed to send Telegram message', error);
     }
   }
 }

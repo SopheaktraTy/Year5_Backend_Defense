@@ -1,33 +1,29 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { jwtConfig } from '../config/jwt.config';
 import { MailModule } from '../services/mail.module';
 import { AuthController } from './auth.controller';
-/**/
+/*Entities*/
 import { User } from './entities/user.entity';
 import { RefreshToken } from './entities/refresh_token.entity'
 import { ResetToken } from './entities/reset_token.entity';
-import { Cart } from '../carts/entities/cart.entity';
-import { CartItem } from 'src/carts/entities/cart_item.entity';
+import { Role } from 'src/roles/entities/role.entity';
+import { Permission } from 'src/roles/entities/permission.entity';
+
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
 
 
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Cart, CartItem]), // Import User repository
-    JwtModule.registerAsync({
-      imports: [ConfigModule], // Import ConfigModule to access environment variables
-      useFactory: async (configService: ConfigService) => jwtConfig(configService), // Call jwtConfig to configure JWT
-      inject: [ConfigService], // Inject ConfigService to access environment variables
-    }),
+    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Role, Permission ]), // Import User repository
+    JwtModule,
     MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
-  exports: [AuthService], // Export AuthService and JwtModule for use in other modules
+  exports: [AuthService], 
 })
 export class AuthModule {}

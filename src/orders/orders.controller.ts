@@ -2,7 +2,7 @@ import { Controller, Post, Get, Delete, Param, Req, Body, ParseUUIDPipe, UseGuar
 import { Request } from 'express';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { AuthGuard } from '../guards/authentication.guard';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @Controller('orders')
@@ -13,9 +13,9 @@ export class OrdersController {
     const user = (request as any).user;
     return user?.sub || user?.id;
   }
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   @ApiBearerAuth('Access-Token')
-  @Post()
+  @Post('add-to-order')
   create(
     @Req() request: Request,
     @Body() createOrderDto: CreateOrderDto,) {
@@ -23,22 +23,22 @@ export class OrdersController {
     return this.ordersService.create(userId, createOrderDto);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   @ApiBearerAuth('Access-Token')
-  @Get('me')
+  @Get('view-my-orders')
   findMyOrders(@Req() request: Request) {
     const userId = this.getUserId(request);
     return this.ordersService.findByUser(userId);
   }
 
-  @Get()
+  @Get('view-all-orders')
   findAll() {
     return this.ordersService.findAll();
   }
 
   
 
-  @Get(':orderId')
+  @Get('/view-a-order/:orderId')
   @ApiParam({ name: 'orderId', type: 'string' })
   findOne(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.ordersService.findOne(orderId);

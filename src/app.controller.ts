@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from './guards/authentication.guard';  // adjust path if needed
+// import { AutheGuard } from './guards/authentication.guard';  // adjust path if needed
 import { AppService } from './app.service';
 
 // @ApiTags('example')

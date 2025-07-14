@@ -7,7 +7,7 @@ import { CartItem } from './cart_item.entity';
     @PrimaryGeneratedColumn('uuid')
     id: string;
   
-    @ManyToOne(() => User, user => user.carts, { nullable: false })
+    @ManyToOne(() => User, user => user.carts, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     user: User;
   

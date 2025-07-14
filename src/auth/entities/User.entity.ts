@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn} from 'typeorm';
 import { Cart } from '../../carts/entities/cart.entity';
+import { Role } from '../../roles/entities/role.entity';
 
 @Entity('users')
 export class User {
@@ -19,14 +20,15 @@ export class User {
   otp_expires_at: Date | null;
 
 
-  @Column({ default: false })
-  is_verified: boolean;
+  @Column({ type: 'enum', enum: ['active', 'not_verified', 'suspended'], default: 'not_verified' })
+  status: 'active' | 'not_verified' | 'suspended';
 
   @Column({ type: 'text', nullable: true })
   image: string | null ;
 
-  @Column({ nullable: true })
-  role_id: string;
+  @ManyToOne(() => Role, role => role.users, { eager: true })  
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
 
   @Column({ nullable: true })
   firstname: string;

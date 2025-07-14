@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { ProductVariable } from './entities/product_variable.entity';
 import { Category } from '../categories/entities/category.entity';
-import { CartItem } from 'src/carts/entities/cart_item.entity';
 
 
 

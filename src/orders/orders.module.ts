@@ -10,21 +10,15 @@ import { ProductVariable } from '../products/entities/product_variable.entity';
 import { Product } from '../products/entities/product.entity';
 
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { jwtConfig } from '../config/jwt.config';
-
-import { TelegramBotService } from '../services/telegrambot.service';
+import { TelegramModule } from '../services/telegrambot.module';
 
 @Module({
   imports: [
+    TelegramModule,
     TypeOrmModule.forFeature([Order, OrderItem, Cart, CartItem, ProductVariable, Product]),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => jwtConfig(configService),
-      inject: [ConfigService],
-    }),
+    JwtModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, TelegramBotService],
+  providers: [OrdersService],
 })
 export class OrdersModule {}

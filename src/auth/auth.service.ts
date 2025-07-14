@@ -2,11 +2,14 @@
 import { SignupDto } from './dto/signup.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginDto } from'./dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 /*Entities*/
 import { User } from './entities/user.entity';
 import { RefreshToken } from './entities/refresh_token.entity'
 import { ResetToken } from './entities/reset_token.entity';
+import { Permission } from 'src/roles/entities/permission.entity';
+import { Role } from 'src/roles/entities/role.entity';
 
 /*Services*/
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,7 +27,10 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private UserRepository: Repository<User>,
     @InjectRepository(RefreshToken) private RefreshTokenRepository: Repository<RefreshToken>,
-    @InjectRepository( ResetToken ) private ResetTokenRepository: Repository<ResetToken>,
+    @InjectRepository(ResetToken) private ResetTokenRepository: Repository<ResetToken>,
+    @InjectRepository(Permission) private PermissionRepository: Repository<Permission>,
+    @InjectRepository(Role) private RoleRepository: Repository<Role>,
+
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -32,31 +38,44 @@ export class AuthService {
 
 
 /*------------ Create a Signup or Create User ------------*/
-async signup(createAuthDto: SignupDto) {
+async signup(signupDto: SignupDto) {
   // 1. Check if email is already taken
-  const existingUser = await this.UserRepository.findOne({ where: { email: createAuthDto.email } });
+  const existingUser = await this.UserRepository.findOne({ where: { email: signupDto.email } });
   if (existingUser) {
     throw new HttpException('This email address is already registered.', HttpStatus.BAD_REQUEST);
   }
+
   // 2. Hash the password securely
-  const hashedPassword = await bcrypt.hash(createAuthDto.password, 10);
-  // 3. Create new user with isVerified = false
+  const hashedPassword = await bcrypt.hash(signupDto.password, 10);
+
+  // 3. Create new user with status and default role_id
   const newUser = this.UserRepository.create({
-    ...createAuthDto,
+    ...signupDto,
     password: hashedPassword,
-    is_verified: false,
+    status: 'not_verified',
+    role: { id: 'beb42f3a-1871-484e-85da-dc51a159ce9f' }, // 👈 Auto assign role_id
   });
+
+  // 4. Save the user
   await this.UserRepository.save(newUser);
-  // 4. Generate 6-digit OTP and set expiry (5 minutes)
+
+  // 5. Generate 6-digit OTP and set expiry (5 minutes)
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   newUser.otp = otp;
   newUser.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
+
+  // 6. Save OTP info
   await this.UserRepository.save(newUser);
-  // 5. Send OTP email using your styled email method
+
+  // 7. Send OTP email
   await this.mailService.sendOtpEmail(newUser.email, otp);
-  // 6. Return success message
-  return { message: 'User registered successfully. Please verify your email using the code sent to you.' };
+
+  // 8. Return success message
+  return {
+    message: 'User registered successfully. Please verify your email using the code sent to you.',
+  };
 }
+
 
 /*------------ resendVerifyOtp with email ------------*/
 async resendVerifyOtp(email: string) {
@@ -77,35 +96,46 @@ async resendVerifyOtp(email: string) {
 /*------------ Create a Signup or Create User ------------*/
 async verifySignupLoginOtp(email: string, otp: string) {
   const user = await this.UserRepository.findOne({ where: { email } });
-  if (!user) throw new HttpException('User account not found.', HttpStatus.BAD_REQUEST);
+  if (!user) {
+    throw new HttpException('User account not found.', HttpStatus.BAD_REQUEST);
+  }
+
+  // Check if suspended
+  if (user.status === 'suspended') {
+    throw new HttpException('Your account has been suspended. Please contact support.', HttpStatus.FORBIDDEN);
+  }
 
   if (!user.otp || !user.otp_expires_at || user.otp_expires_at < new Date()) {
     throw new HttpException('The verification code has expired or is invalid.', HttpStatus.BAD_REQUEST);
   }
+
   if (user.otp !== otp) {
     throw new HttpException('Incorrect verification code.', HttpStatus.BAD_REQUEST);
   }
-  // If user is not verified (sign-up flow), mark verified
-  if (!user.is_verified) {
-    user.is_verified = true;
+
+  // If user is not verified (sign-up flow), mark verified by updating status
+  if (user.status === 'not_verified') {
+    user.status = 'active';
   }
+
   // Clear OTP fields after successful verification
   user.otp = null;
   user.otp_expires_at = null;
   await this.UserRepository.save(user);
 
-  // Before creating a new refresh token, delete any existing tokens for this user
+  // Delete existing refresh tokens for this user
   await this.RefreshTokenRepository.delete({ user: { id: user.id } });
 
   // Generate JWT tokens
   const payload = { email: user.email, sub: user.id };
   const accessToken = this.jwtService.sign(payload);
   const refreshToken = uuidv4();
-  // Save refresh token
+
+  // Save refresh token entity
   const refreshTokenEntity = this.RefreshTokenRepository.create({
     refresh_token: refreshToken,
     user,
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // expires in 7 days
   });
   await this.RefreshTokenRepository.save(refreshTokenEntity);
 
@@ -116,26 +146,34 @@ async verifySignupLoginOtp(email: string, otp: string) {
   };
 }
 
+
 /*------------ Login and Generate JWT Token ------------*/
 async login(createLoginDto: LoginDto) {
   const user = await this.UserRepository.findOne({ where: { email: createLoginDto.email } });
-  if (!user) throw new HttpException('The provided credentials are incorrect.', HttpStatus.BAD_REQUEST);
+  if (!user) {
+    throw new HttpException('The provided credentials are incorrect.', HttpStatus.BAD_REQUEST);
+  }
 
   const passwordMatch = await bcrypt.compare(createLoginDto.password, user.password);
-  if (!passwordMatch) throw new HttpException('Invalid password. Please try again.', HttpStatus.BAD_REQUEST);
-
-  if (!user.is_verified) {
-    throw new HttpException('Account not verified. Please verify your email first.', HttpStatus.FORBIDDEN);
+  if (!passwordMatch) {
+    throw new HttpException('Invalid password. Please try again.', HttpStatus.BAD_REQUEST);
   }
+
+  if (user.status === 'suspended') {
+    throw new HttpException('Your account has been suspended. Please contact support.', HttpStatus.FORBIDDEN);
+  }
+
   // Generate OTP and save
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
-  user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+  user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000); // expires in 5 minutes
   await this.UserRepository.save(user);
+
   // Send OTP email
   await this.mailService.sendOtpEmail(user.email, otp);
+
   return {
-    message: 'OTP sent to your email. Please verify to complete login.'
+    message: 'OTP sent to your email. Please verify to complete login.',
   };
 }
 
@@ -158,7 +196,7 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   // 3. Delete old token from database
   await this.RefreshTokenRepository.remove(storedToken);
   // 4. Generate new tokens
-  const payload = { email: user.email, sub: user.id };
+  const payload = { email: user.email, sub: user.id , role: user.role.name };
   const newAccessToken = this.jwtService.sign(payload);
   const newRefreshToken = uuidv4();
   // 5. Save new refresh token
@@ -177,7 +215,7 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
   };
 }
 
-/*------------ changePassword ------------*/
+/*------------ Change Password with Old Password and New Password ------------*/
 async changePassword(userId: string, oldPassword: string, newPassword: string) {
   // Find the user by ID
   const user = await this.UserRepository.findOneBy({ id: userId });
@@ -199,9 +237,9 @@ async changePassword(userId: string, oldPassword: string, newPassword: string) {
   user.password = newHashedPassword;
   await this.UserRepository.save(user);
   return { message: 'Password changed successfully' };
-  }
+}
 
-  /*------------ forgetPassword ------------*/
+/*------------ Forget Password with Sent Email ------------*/
 async forgetPassword(email: string) {
   // 1. Find user by email
   const user = await this.UserRepository.findOne({ where: { email } });
@@ -225,5 +263,221 @@ async forgetPassword(email: string) {
   await this.mailService.sendPasswordResetEmail(user.email, resetToken);
   return { message: 'Reset password link sent to your email' };
 }
+
+/*------------ Reset Password with Token  ------------*/
+async resetPassword(token: string, newPassword: string) {
+  // 1. Find reset token
+  const resetToken = await this.ResetTokenRepository.findOne({
+    where: { reset_token: token },
+    relations: ['user'],
+  });
+
+  if (!resetToken || resetToken.expires_at < new Date()) {
+    throw new BadRequestException('Invalid or expired token');
+  }
+
+  // 2. Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // 3. Update user password
+  resetToken.user.password = hashedPassword;
+  await this.UserRepository.save(resetToken.user);
+
+  // 4. Delete the reset token
+  await this.ResetTokenRepository.delete({ id: resetToken.id });
+
+  return { message: 'Password has been reset successfully' };
 }
 
+/*------------ Get Profile or View a profile by user------------*/
+async getProfile(userId: string) {
+  const user = await this.UserRepository.findOne({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found.');
+  }
+
+  // Return a safe subset of user data (no cart info)
+  return {
+    id: user.id,
+    email: user.email,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    image: user.image,
+    gender: user.gender,
+    phone_number: user.phone_number,
+    date_of_birth: user.date_of_birth,
+    is_verified: user.status,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+    role_id: user.role,
+  };
+}
+
+/*------------ Update Profile by user ------------*/
+async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
+  // 1. Find user
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new NotFoundException('User not found.');
+  }
+
+  // 2. Update only provided fields
+  Object.assign(user, updateProfileDto);
+
+  // 3. Save updated user
+  await this.UserRepository.save(user);
+
+  // 4. Prepare filtered response (remove null/undefined)
+  const filteredProfile = Object.fromEntries(
+    Object.entries({
+      id: user.id,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      gender: user.gender,
+      phone_number: user.phone_number,
+      date_of_birth: user.date_of_birth,
+      image: user.image,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    }).filter(([_, value]) => value !== null && value !== undefined)
+  );
+
+  // 5. Return cleaned-up response
+  return {
+    message: 'Profile updated successfully.',
+    profile: filteredProfile,
+  };
+}
+
+/*------------ Get All Users ------------*/
+async getAllUsers(): Promise<User[]> {
+  return this.UserRepository.find();
+}
+
+/*------------ Get User by ID ------------*/
+async getUserById(userId: string): Promise<User> {
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return user;
+}
+
+/*------------ Toggle User Suspension or Activation ------------*/
+async toggleUserSuspension(userId: string) {
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Only toggle if the user is currently active or suspended
+  if (user.status === 'active' || user.status === 'not_verified') {
+    user.status = 'suspended';
+  } else if (user.status === 'suspended') {
+    user.status = 'active';
+  } else {
+    throw new BadRequestException('User must be verified before suspending or reactivating');
+  }
+
+  await this.UserRepository.save(user);
+
+  return {
+    message:
+      user.status === 'suspended'
+        ? 'User suspended successfully.'
+        : 'User reactivated successfully.',
+    user: {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      updated_at: user.updated_at,
+    },
+  };
+}
+
+/*------------ Delete User and Associated Tokens ------------*/
+async deleteUser(userId: string) {
+  // 1. Find the user
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // 2. Delete associated refresh tokens
+  await this.RefreshTokenRepository.delete({ user: { id: userId } });
+
+  // 3. Delete associated reset tokens
+  await this.ResetTokenRepository.delete({ user: { id: userId } });
+
+  // 4. Delete the user
+  await this.UserRepository.remove(user); // or: await this.UserRepository.delete(userId);
+
+  // 5. Return success message
+  return {
+    message: 'User and all associated tokens deleted successfully.',
+    userId: user.id,
+    email: user.email,
+  };
+}
+
+/*------------ Toggle User Role between Default and Admin ------------*/
+async toggleUserRole(userId: string): Promise<{ message: string; newRoleId: string }> {
+  // Define two roles to toggle between
+  const ROLE_A = 'beb42f3a-1871-484e-85da-dc51a159ce9f'; // Default role
+  const ROLE_B = 'dfc7b04c-d0d1-412f-bbf8-77074a4fb719'; // Admin or alternate role
+
+  // 1. Get the user with their role
+  const user = await this.UserRepository.findOne({
+    where: { id: userId },
+    relations: ['role'],
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // 2. Determine the new role ID
+  const currentRoleId = user.role?.id;
+  const newRoleId = currentRoleId === ROLE_A ? ROLE_B : ROLE_A;
+
+  // 3. Assign new role
+  user.role = { id: newRoleId } as any; // Use `as any` to satisfy type check
+
+  // 4. Save changes
+  await this.UserRepository.save(user);
+
+  // 5. Return response
+  return {
+    message: 'User role updated successfully',
+    newRoleId,
+  };
+}
+
+/*------------ Get User Permissions by User ID ------------*/
+async getUserPermissions(userId: string) {
+  const user = await this.UserRepository.findOne({
+    where: { id: userId },
+    relations: ['role', 'role.permissions'], // Load nested relations
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  if (!user.role) {
+    throw new NotFoundException('User has no assigned role');
+  }
+
+  return user.role.permissions;
+}
+
+}

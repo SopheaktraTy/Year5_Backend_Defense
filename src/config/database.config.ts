@@ -10,6 +10,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Order } from 'src/orders/entities/order.entity';
 import { OrderItem } from 'src/orders/entities/order_item.entity';
+import { Role } from 'src/roles/entities/role.entity';
+import { Permission } from 'src/roles/entities/permission.entity';
 
 export const databaseConfig = async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
   type: 'postgres',
@@ -29,6 +31,9 @@ export const databaseConfig = async (configService: ConfigService): Promise<Type
     CartItem,
     Category,
     Order,
-    OrderItem
+    OrderItem,
+    Role,
+    Permission,
+  
   ],
 });

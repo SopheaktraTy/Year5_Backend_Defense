@@ -2,11 +2,11 @@ import { Controller, Get, Post, Put, Delete, Body, Param, ParseUUIDPipe, UseGuar
 import { CartsService } from './carts.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { AuthGuard } from '../guards/authentication.guard';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthenticationGuard)
 @ApiBearerAuth('Access-Token')
 // @ApiTags('carts')
 @Controller('Carts')
@@ -17,19 +17,19 @@ export class CartsController {
     return (request as any).user?.sub || (request as any).user?.id;
   }
 
-  @Post()
+  @Post('add-to-cart')
   create(@Req() request: Request, @Body() createCartDto: CreateCartDto) {
     const userId = this.getUserId(request);
     return this.cartsService.create(userId, createCartDto);
   }
 
-  @Get()
+  @Get('view-my-cart')
   findByUser(@Req() request: Request) {
     const userId = this.getUserId(request);
     return this.cartsService.findByUser(userId);
   }
 
-  @Put(':cartItemId')
+  @Put('/update-a-item/:cartItemId')
   updateCartItem(
     @Req() request: Request,
     @Param('cartItemId') cartItemId: string,
@@ -39,7 +39,7 @@ export class CartsController {
     return this.cartsService.updateCartItem(userId, cartItemId, updateCartItemDto);
   }
 
-  @Delete(':cartItemId')
+  @Delete('/remove-a-item/:cartItemId')
   removeCartItem(
     @Req() request: Request,
     @Param('cartItemId') cartItemId: string,
@@ -48,7 +48,7 @@ export class CartsController {
     return this.cartsService.removeCartItem(userId, cartItemId);
   }
 
-  @Delete()
+  @Delete('remove-all-items')
   clearCart(@Req() request: Request) {
     const userId = this.getUserId(request);
     return this.cartsService.clearCart(userId);
