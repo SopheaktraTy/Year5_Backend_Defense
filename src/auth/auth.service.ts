@@ -11,7 +11,7 @@ import { ResetToken } from './entities/reset_token.entity';
 import { Permission } from 'src/roles/entities/permission.entity';
 import { Role } from 'src/roles/entities/role.entity';
 
-/*Services*/
+/*Nestjs Hyper Class*/
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException, HttpStatus , NotFoundException, Injectable, UnauthorizedException, BadRequestException} from '@nestjs/common';
 import { Repository, LessThan } from 'typeorm';
@@ -127,7 +127,7 @@ async verifySignupLoginOtp(email: string, otp: string) {
   await this.RefreshTokenRepository.delete({ user: { id: user.id } });
 
   // Generate JWT tokens
-  const payload = { email: user.email, sub: user.id };
+  const payload = { email: user.email, sub: user.id, role: user.role.name };
   const accessToken = this.jwtService.sign(payload);
   const refreshToken = uuidv4();
 

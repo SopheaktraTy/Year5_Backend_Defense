@@ -1,12 +1,19 @@
+/*NestJS imports*/
 import { Injectable, Logger, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+/*Service*/
+import { TelegramBotService } from '../services/telegrambot.service';
+
+/*DTOs*/
+import { CreateOrderDto } from './dto/create-order.dto';
+
+/*Entities*/
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order_item.entity';
 import { Cart } from '../carts/entities/cart.entity';
 import { CartItem } from '../carts/entities/cart_item.entity';
-import { TelegramBotService } from '../services/telegrambot.service';
 import { ProductVariable } from '../products/entities/product_variable.entity';
 import { Product } from '../products/entities/product.entity';
 

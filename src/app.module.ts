@@ -12,8 +12,12 @@ import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    ...appModules, // spread the modules array here
+    // ✅ 1. Load env/config **first**
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
 
+    // ✅ 2. Now it's safe to use
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => databaseConfig(configService),
@@ -26,12 +30,8 @@ import { JwtModule } from '@nestjs/jwt';
       inject: [ConfigService],
     }),
 
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-
-   
-
+    // ✅ 3. Your feature modules
+    ...appModules,
   ],
   controllers: [],
   providers: [],

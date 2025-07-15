@@ -1,8 +1,13 @@
+/*Nestjs Hyper Class*/
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
+
+/*Entities*/
 import { Category } from './entities/category.entity';
 import { Product } from '../products/entities/product.entity';
+
+/*DTOs*/
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 

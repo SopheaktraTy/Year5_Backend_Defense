@@ -6,7 +6,7 @@ export enum Resource{
     PRODUCT_VARIABLES = "product_variables",
     CARTS = "carts",
     ORDERS = "orders",
-    TRANSACTIONS = "transaction",
+    TRANSACTIONS = "transactions",
     ROLES = "roles",
     PERMISSIONS = "permissions"
 }

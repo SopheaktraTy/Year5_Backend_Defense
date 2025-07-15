@@ -1,4 +1,4 @@
-/*Nestjs Service*/
+/*Nestjs Hyper Class*/
 import { Controller, Post, Body, Put, UseGuards, Req, Patch, Param, Get, Delete} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth } from '@nestjs/swagger'
@@ -27,14 +27,13 @@ import { Action } from 'src/roles/enums/action.enum';
 
 
 
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
-@ApiBearerAuth('Access-Token')
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   
-  /*---------------- Authentication ----------------*/  
+  // Authentication Endpoints
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
   @Post('signup')
   async signUp(@Body() SignupDto: SignupDto) {
@@ -60,12 +59,17 @@ export class AuthController {
     const { email } = resendOtpDto;
     return this.authService.resendVerifyOtp(email);
   }
+
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
   @Post('refresh-token')
   async refreshTokens(@Body() RefreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshTokens(RefreshTokenDto);
   }
-
+  
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.AUTH, actions: [Action.UPDATE] }])
   @Put('change-password')
   async changePassword(@Body() ChangePasswordDto: ChangePasswordDto, @Req() req) {
@@ -84,14 +88,16 @@ export class AuthController {
     return this.authService.resetPassword(body.token, body.newPassword);
   }
 
-  
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.AUTH, actions: [Action.READ] }])
   @Get('view-my-profile')
   async getProfile(@Req() req) {
     return this.authService.getProfile(req.userId);
 
 }
-
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.AUTH, actions: [Action.UPDATE] }])
   @Put('update-profile')
   async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Req() req) {
@@ -102,13 +108,17 @@ export class AuthController {
 
 
 
-  /*---------------- User Managerments ----------------*/
+  // User Management Endpoints
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.READ] }])
   @Get ('view-all-users')
     async getAllUsers() {
         return this.authService.getAllUsers();
       }
 
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.READ] }])
   @Get('view-a-user/:userId')
   async getUserById(@Req() req) {
@@ -116,18 +126,24 @@ export class AuthController {
     return this.authService.getUserById(userId);
   }
   
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.UPDATE] }])
   @Patch('/suspend-a-user/:userId')
   async toggleUserSuspension(@Param('id') userId: string) {
     return this.authService.toggleUserSuspension(userId);
   }
   
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.UPDATE] }])
   @Put('/change-user-role/:userId')
   async toggleUserRole(@Param('id') userId: string) {
     return this.authService.toggleUserRole(userId);
   }
-
+  
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.DELETE] }])
   @Delete('/user/:userId')
   async deleteUser(@Param('userId') userId: string) {

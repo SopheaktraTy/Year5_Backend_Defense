@@ -1,10 +1,13 @@
+/*NestJS imports*/
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository,  } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-/**/
+
+/*Entities*/
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
-/**/
+
+/*DTO*/
 import { RoleDto } from './dto/role.dto';
 import { PermissionDto } from './dto/permission.dto';
 
