@@ -14,15 +14,20 @@ export class AuthenticationGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Token not found in Authorization header');
     }
-    try {
-      const payload = this.jwtService.verify(token);
-      request['user'] = payload;
-      return true;
-    } catch (e) {
-      throw new UnauthorizedException('Invalid token');
-    }
+      try {
+    const payload = this.jwtService.verify(token);
+    request['user'] = {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
+    return true;
+  } catch (e) {
+    console.error('JWT Error:', e.message);
+    throw new UnauthorizedException('Invalid or expired token');
+  }
   }
   private extractTokenFromHeader(request: Request): string | undefined {
     return request.headers.authorization?.split(' ')[1];

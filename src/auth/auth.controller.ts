@@ -47,7 +47,7 @@ export class AuthController {
   }
   
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
-  @Post('verify-signup-otp')
+  @Post('verify-signup-login-otp')
   async verifySignupOtp(@Body() verifyOtpDto: VerifySignupLoginOtpDto) {
     const { email, otp } = verifyOtpDto;
     return await this.authService.verifySignupLoginOtp(email, otp);
@@ -60,8 +60,6 @@ export class AuthController {
     return this.authService.resendVerifyOtp(email);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
   @Post('refresh-token')
   async refreshTokens(@Body() RefreshTokenDto: RefreshTokenDto) {

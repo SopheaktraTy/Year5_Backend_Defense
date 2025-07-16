@@ -15,6 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
     // ✅ 1. Load env/config **first**
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env', 
     }),
 
     // ✅ 2. Now it's safe to use
@@ -25,10 +26,11 @@ import { JwtModule } from '@nestjs/jwt';
     }),
 
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => jwtConfig(configService),
-      inject: [ConfigService],
-    }),
+    global: true,
+    imports: [ConfigModule],
+    useFactory: jwtConfig,
+    inject: [ConfigService],
+  }),
 
     // ✅ 3. Your feature modules
     ...appModules,

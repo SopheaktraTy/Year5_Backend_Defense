@@ -7,9 +7,18 @@ import * as bodyParser from 'body-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
- // Increase request body size limits
+  // Enable CORS for frontend (adjust origin as needed)
+  app.enableCors({
+    origin: ['http://localhost:3000'], // Your Next.js frontend URL
+    credentials: true,
+  });
+
+  // Increase request body size limits
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  
+  // Set global prefix for API routes
+  app.setGlobalPrefix('api'); 
 
   // Apply global validation pipes
   app.useGlobalPipes(
@@ -39,6 +48,4 @@ async function bootstrap() {
 
   await app.listen(3001);
 }
-
-
 bootstrap();

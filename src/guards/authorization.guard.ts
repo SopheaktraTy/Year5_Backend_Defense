@@ -15,7 +15,7 @@ export class AuthorizationGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
       // Check for authenticated user ID
-    const userId = request.user?.id || request.userId;
+    const userId = request.user?.id || request.user?.sub || request.userId;
     if (!userId) {
       throw new UnauthorizedException('User ID not found in request.');
     }
