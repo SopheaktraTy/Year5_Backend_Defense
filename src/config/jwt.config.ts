@@ -10,7 +10,7 @@ export const jwtConfig = async (
   return {
     secret: secret || 'default_secret',
     signOptions: {
-      expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '1h',
+      expiresIn: configService.get<string>('JWT_EXPIRES_IN'),
     },
   };
 };

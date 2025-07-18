@@ -23,8 +23,6 @@ export class User {
   @Column({ type: 'enum', enum: ['active', 'not_verified', 'suspended'], default: 'not_verified' })
   status: 'active' | 'not_verified' | 'suspended';
 
-  @Column({ type: 'text', nullable: true })
-  image: string | null ;
 
   @ManyToOne(() => Role, role => role.users, { eager: true })  
   @JoinColumn({ name: 'role_id' })
@@ -53,5 +51,8 @@ export class User {
 
   @OneToMany(() => Cart, (cart) => cart.user)
   carts: Cart[];
+
+  @Column({ type: 'text', nullable: true })
+  image: string | null ;
 
 }

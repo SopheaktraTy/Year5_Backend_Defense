@@ -359,16 +359,6 @@ async getAllUsers(): Promise<User[]> {
   return this.UserRepository.find();
 }
 
-/*------------ Get User by ID ------------*/
-async getUserById(userId: string): Promise<User> {
-  const user = await this.UserRepository.findOne({ where: { id: userId } });
-
-  if (!user) {
-    throw new NotFoundException('User not found');
-  }
-
-  return user;
-}
 
 /*------------ Toggle User Suspension or Activation ------------*/
 async toggleUserSuspension(userId: string) {
@@ -378,7 +368,7 @@ async toggleUserSuspension(userId: string) {
     throw new NotFoundException('User not found');
   }
 
-  // Only toggle if the user is currently active or suspended
+  // Toggle logic
   if (user.status === 'active' || user.status === 'not_verified') {
     user.status = 'suspended';
   } else if (user.status === 'suspended') {
@@ -430,14 +420,12 @@ async deleteUser(userId: string) {
 }
 
 /*------------ Toggle User Role between Default and Admin ------------*/
-async toggleUserRole(userId: string): Promise<{ message: string; newRoleId: string }> {
-  // Define two roles to toggle between
-  const ROLE_A = 'beb42f3a-1871-484e-85da-dc51a159ce9f'; // Default role
-  const ROLE_B = 'dfc7b04c-d0d1-412f-bbf8-77074a4fb719'; // Admin or alternate role
+async toggleUserRole(id: string): Promise<{ message: string; newRoleId: string }> {
+  const ROLE_A = 'beb42f3a-1871-484e-85da-dc51a159ce9f'; // customer
+  const ROLE_B = 'dfc7b04c-d0d1-412f-bbf8-77074a4fb719'; // admin
 
-  // 1. Get the user with their role
   const user = await this.UserRepository.findOne({
-    where: { id: userId },
+    where: { id: id },
     relations: ['role'],
   });
 
@@ -445,22 +433,18 @@ async toggleUserRole(userId: string): Promise<{ message: string; newRoleId: stri
     throw new NotFoundException('User not found');
   }
 
-  // 2. Determine the new role ID
   const currentRoleId = user.role?.id;
   const newRoleId = currentRoleId === ROLE_A ? ROLE_B : ROLE_A;
 
-  // 3. Assign new role
-  user.role = { id: newRoleId } as any; // Use `as any` to satisfy type check
-
-  // 4. Save changes
+  user.role = { id: newRoleId } as any;
   await this.UserRepository.save(user);
 
-  // 5. Return response
   return {
     message: 'User role updated successfully',
     newRoleId,
   };
 }
+
 
 /*------------ Get User Permissions by User ID ------------*/
 async getUserPermissions(userId: string) {

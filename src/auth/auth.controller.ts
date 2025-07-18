@@ -83,7 +83,7 @@ export class AuthController {
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
-    return this.authService.resetPassword(body.token, body.newPassword);
+    return this.authService.resetPassword(body.resetToken, body.newPassword);
   }
 
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -91,7 +91,7 @@ export class AuthController {
   @Permissions([{resource: Resource.AUTH, actions: [Action.READ] }])
   @Get('view-my-profile')
   async getProfile(@Req() req) {
-    return this.authService.getProfile(req.userId);
+    return this.authService.getProfile(req.user.id);
 
 }
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -115,20 +115,12 @@ export class AuthController {
         return this.authService.getAllUsers();
       }
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  @ApiBearerAuth('Access-Token')
-  @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.READ] }])
-  @Get('view-a-user/:userId')
-  async getUserById(@Req() req) {
-    const userId = req.params.id;
-    return this.authService.getUserById(userId);
-  }
-  
+
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.UPDATE] }])
   @Patch('/suspend-a-user/:userId')
-  async toggleUserSuspension(@Param('id') userId: string) {
+  async toggleUserSuspension(@Param('userId') userId: string) {
     return this.authService.toggleUserSuspension(userId);
   }
   
@@ -136,14 +128,14 @@ export class AuthController {
   @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.UPDATE] }])
   @Put('/change-user-role/:userId')
-  async toggleUserRole(@Param('id') userId: string) {
+  async toggleUserRole(@Param('userId') userId: string) {
     return this.authService.toggleUserRole(userId);
   }
   
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.USER_MANAGEMENTS, actions: [Action.DELETE] }])
-  @Delete('/user/:userId')
+  @Delete('/delete-user/:userId')
   async deleteUser(@Param('userId') userId: string) {
     return this.authService.deleteUser(userId);
   }

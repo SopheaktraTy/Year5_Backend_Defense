@@ -7,7 +7,7 @@ export class ResetPasswordDto {
     example: 'df8901e2-1d35-4a5e-9325-f9d3912ddc2a',
   })
   @IsString()
-  token: string;
+  resetToken: string;
 
   @ApiProperty({
     description: 'New password (min 6 characters, at least one letter and one number)',
