@@ -16,8 +16,6 @@ export class Product {
   @Column({ type: 'varchar', length: 255 })
   product_name: string;
 
-  @Column({ nullable: true, type: 'varchar', length: 255 })
-  image: string;
 
   @Column({ nullable: true, type: 'text' })
   description: string;
@@ -45,4 +43,8 @@ export class Product {
   
   @OneToMany(() => ProductVariable, (product_variable) => product_variable.product, { cascade: true })
   product_variables: ProductVariable[]; 
+
+  @Column({ nullable: true, type: 'text' })
+  image: string;
+
 }

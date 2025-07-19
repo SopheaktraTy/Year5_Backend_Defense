@@ -96,11 +96,13 @@ export class AuthController {
 }
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @ApiBearerAuth('Access-Token')
-  @Permissions([{resource: Resource.AUTH, actions: [Action.UPDATE] }])
+  @Permissions([{ resource: Resource.AUTH, actions: [Action.UPDATE] }])
   @Put('update-profile')
-  async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Req() req) {
-    return this.authService.updateProfile(req.userId, updateProfileDto);
-}
+  async updateProfile(@Req() req: any, @Body() updateProfileDto: UpdateProfileDto) {
+    const userId = req.user?.id;
+    return this.authService.updateProfile(userId, updateProfileDto);
+  }
+
  
 
 

@@ -213,6 +213,12 @@ async updateProduct(productId: string, updateProductDto: UpdateProductDto,): Pro
     product.category = category;
   }
 
+  // Update description if provided
+    if (updateProductDto.description !== undefined) {
+      product.description = updateProductDto.description;
+    }
+
+
   // Recalculate total quantity from product variables
   const totalQuantity = product.product_variables.reduce(
     (sum, variable) => sum + variable.quantity,

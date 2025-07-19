@@ -325,13 +325,13 @@ async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     throw new NotFoundException('User not found.');
   }
 
-  // 2. Update only provided fields
+  // 2. Merge only provided fields
   Object.assign(user, updateProfileDto);
 
   // 3. Save updated user
   await this.UserRepository.save(user);
 
-  // 4. Prepare filtered response (remove null/undefined)
+  // 4. Return filtered profile
   const filteredProfile = Object.fromEntries(
     Object.entries({
       id: user.id,
@@ -347,12 +347,12 @@ async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     }).filter(([_, value]) => value !== null && value !== undefined)
   );
 
-  // 5. Return cleaned-up response
   return {
     message: 'Profile updated successfully.',
     profile: filteredProfile,
   };
 }
+
 
 /*------------ Get All Users ------------*/
 async getAllUsers(): Promise<User[]> {

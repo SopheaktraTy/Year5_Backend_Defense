@@ -23,31 +23,34 @@ import { Resource } from 'src/roles/enums/resource.enum'
 import { Action } from 'src/roles/enums/action.enum';
 
 
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
-@ApiBearerAuth('Access-Token')
-@Controller('Products')
+
+
+@Controller('products')
 export class ProductsController {
   constructor(private readonly productService: ProductsService) {}
   
   //Product Endpoints
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCTS, actions: [Action.CREATE] }])
   @Post('add-a-product')
   async create(@Body() createProductDto: CreateProductDto) {
     return this.productService.createProductWithProductVariable(createProductDto);
   }
   
-  @Permissions([{resource: Resource.PRODUCTS, actions: [Action.READ] }])
+  
   @Get('view-all-products')
   async findAll() {
     return this.productService.findAll();
   }
 
-  @Permissions([{resource: Resource.PRODUCTS, actions: [Action.READ] }])
   @Get('/view-a-product/:productId')  
   async findOne(@Param('productId') productId: string) {
     return this.productService.findOne(productId);
   }
-
+  
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCTS, actions: [Action.UPDATE] }])
   @Put('/update-a-product/:productId')  
   async update(
@@ -57,6 +60,8 @@ export class ProductsController {
     return this.productService.updateProduct(productId, updateProductDto);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCTS, actions: [Action.DELETE] }])
   @Delete('/remove-a-product/:productId') 
   async delete(@Param('productId') productId: string): Promise<{ message: string }> {
@@ -65,12 +70,16 @@ export class ProductsController {
   
 
   //Product Variable Endpoints
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCT_VARIABLES, actions: [Action.CREATE] }])
   @Post('/add-product-variables/:productId')
   async createProductVariable(@Param('productId') productId: string, @Body() createProductVariableDto: CreateProductVariableDto,) {
     return this.productService.createProductVariable(productId, createProductVariableDto);
   }
   
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCT_VARIABLES, actions: [Action.UPDATE] }])
   @Put('/update-a-product-variable/:variableId') 
   async updateProductVariable(
@@ -78,7 +87,8 @@ export class ProductsController {
     @Body() updateProductVariableDto: UpdateProductVariableDto,) {
     return this.productService.updateProductVariable(variableId, updateProductVariableDto);
   }
-
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.PRODUCT_VARIABLES, actions: [Action.DELETE] }])
   @Delete('/remove-a-product-variable/:variableId')
   async deleteProductVariable(@Param('variableId') variableId: string) {

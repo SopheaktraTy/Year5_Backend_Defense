@@ -21,37 +21,42 @@ import { Resource } from 'src/roles/enums/resource.enum'
 import { Action } from 'src/roles/enums/action.enum';
 
 
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
-@ApiBearerAuth('Access-Token')
+
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
   
   //Category Endpoints
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.CATEGORYS, actions: [Action.CREATE] }])
   @Post('add-a-category')
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
   
-  @Permissions([{resource: Resource.CATEGORYS, actions: [Action.READ] }])
+ 
   @Get('view-all-categories')
   findAll() {
     return this.categoriesService.findAll();
   }
   
-  @Permissions([{resource: Resource.CATEGORYS, actions: [Action.READ] }])
+  
   @Get('/view-a-category/:categoryId')
   findOne(@Param('categoryId') id: string) {
     return this.categoriesService.findOne(id);
   }
   
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.CATEGORYS, actions: [Action.UPDATE] }])
   @Put('/update-a-category/:categoryId')
   update(@Param('categoryId') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
     return this.categoriesService.update(id, updateCategoryDto);
   }
   
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @ApiBearerAuth('Access-Token')
   @Permissions([{resource: Resource.CATEGORYS, actions: [Action.DELETE] }])
   @Delete('/remove-a-category/:categoryId')
   remove(@Param('categoryId') id: string) {

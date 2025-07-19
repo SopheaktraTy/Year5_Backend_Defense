@@ -10,11 +10,11 @@ export class Category {
   category_name: string; // Matches categoryName in DTO
 
   @Column({ nullable: true })
-  image: string; // Make sure this property exists
-
-  @Column({ nullable: true })
   description: string; // Matches description in DTO
 
   @OneToMany(() => Product, product => product.category)
   products: Product[];
+
+  @Column({ nullable: true })
+  image: string; // Make sure this property exists
 }

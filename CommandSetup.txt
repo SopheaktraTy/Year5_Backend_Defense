@@ -38,3 +38,6 @@ npm run typeorm migration:run
 
 #Install Axios
 npm install axios
+
+npm run typeorm schema:drop
+npm run typeorm migration:run
