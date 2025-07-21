@@ -188,6 +188,11 @@ async updateProduct(productId: string, updateProductDto: UpdateProductDto,): Pro
     product.original_price = updateProductDto.originalPrice;
   }
 
+  // ✅ Update image if provided
+  if (updateProductDto.image !== undefined) {
+    product.image = updateProductDto.image;
+  }
+
   // Update discount_percentage_tag only if provided (including zero)
   if (updateProductDto.discountPercentageTag !== undefined) {
     product.discount_percentage_tag = updateProductDto.discountPercentageTag;

@@ -1,45 +1,71 @@
 import { Inject, Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import axios from 'axios';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-interface MailConfig {
-  host: string;
-  port: number;
-  auth: {
-    user: string;
-    pass: string;
-  };
+interface MailApiConfig {
+  apiToken: string;
+  senderEmail: string;
+  senderName: string;
 }
 
 @Injectable()
 export class MailService {
-  private transporter;
+  private readonly apiToken: string;
+  private readonly senderEmail: string;
+  private readonly senderName: string;
   private readonly logoSvg: string;
 
-  constructor(@Inject('MAIL_CONFIG') private mailConfig: MailConfig) {
-    this.transporter = nodemailer.createTransport(this.mailConfig);
-     this.logoSvg = readFileSync( join(process.cwd(), 'public', 'logo', 'Logo No Text.svg'), 'utf8' ).replace( /<svg([^>]+)>/, '<svg$1 style="width: 50%; height: auto; display: block;" viewBox="0 0 300 100">'
-  );
+  constructor(@Inject('MAIL_CONFIG') private readonly mailConfig: MailApiConfig) {
+    this.apiToken = this.mailConfig.apiToken;
+    this.senderEmail = this.mailConfig.senderEmail;
+    this.senderName = this.mailConfig.senderName;
+
+    this.logoSvg = readFileSync(
+      join(process.cwd(), 'public', 'logo', 'Logo No Text.svg'),
+      'utf8'
+    ).replace(
+      /<svg([^>]+)>/,
+      '<svg$1 style="width: 50%; height: auto; display: block;" viewBox="0 0 300 100">'
+    );
   }
-  
+
+  private async sendViaApi(to: string, subject: string, text: string, html?: string) {
+  try {
+    const response = await axios.post(
+      'https://sandbox.api.mailtrap.io/api/send/3907131',
+      {
+        from: {
+          email: this.senderEmail,
+          name: this.senderName,
+        },
+        to: [{ email: to }],
+        subject,
+        text,
+        html,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Mailtrap API Error:', error.response?.data || error.message);
+    throw new Error('Failed to send email');
+  }
+}
 
   async sendMail(to: string, subject: string, text: string, html?: string) {
-    const mailOptions = {
-      from: '"MONOSTORE" <no-reply@example.com>',
-      to,
-      subject,
-      text,
-      html,
-    };
-    return this.transporter.sendMail(mailOptions);
+    return this.sendViaApi(to, subject, text, html);
   }
-
-async sendPasswordResetEmail(to: string, token: string) {
-  const resetLink = `http://localhost:3000/reset-password?resetToken=${token}`;
-  const subject = 'Password Reset Request';
-
-  const html = `
+  async sendPasswordResetEmail(to: string, token: string) {
+    const resetLink = `http://localhost:3000/reset-password?resetToken=${token}`;
+    const subject = 'Password Reset Request';
+    const html =  `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; background: #ffffff;">
       
       <!-- Logo Header -->
@@ -117,19 +143,15 @@ async sendPasswordResetEmail(to: string, token: string) {
         </p>
       </div>
     </div>
-  `;
+  `; // Use full HTML from previous implementation
+    const text = `You requested a password reset. Use this link to reset your password: ${resetLink}`;
+    return this.sendMail(to, subject, text, html);
+  }
 
-  const text = `You requested a password reset. Use this link to reset your password: ${resetLink}`;
-
-  return this.sendMail(to, subject, text, html);
-}
-
-
-async sendOtpEmail(to: string, otp: string) {
-  const subject = 'Verify your account with OTP';
-  const text = `Your OTP code is: ${otp}`;
-  
-  const html = `
+  async sendOtpEmail(to: string, otp: string) {
+    const subject = 'Verify your account with OTP';
+    const text = `Your OTP code is: ${otp}`;
+    const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; background: #ffffff;">
       
       <!-- Logo Header -->
@@ -212,8 +234,7 @@ async sendOtpEmail(to: string, otp: string) {
         </p>
       </div>
     </div>
-  `;
-
-  return this.sendMail(to, subject, text, html);
-}
+  `; // Use full HTML from previous implementation
+    return this.sendMail(to, subject, text, html);
+  }
 }
