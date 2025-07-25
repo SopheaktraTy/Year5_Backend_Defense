@@ -141,14 +141,22 @@ export class OrdersService {
         ? fullOrder.order_items.map(item => item.product?.product_name || 'Unknown Product').join(', ')
         : 'Unknown Product';
 
+      const productDetails = orderItems
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.product.product_name} x${item.quantity} – ${item.price_at_order.toLocaleString()}៛`
+  )
+  .join('\n');
+
       // Send Telegram notification with all data
       await this.telegramBotService.sendOrderNotification(
         fullOrder.order_no.toString(),
         fullOrder.total_amount,
         userName,
-        productNames
+        productDetails, // product name + quantity list
+        fullOrder.user.email || 'N/A',
+        fullOrder.user.phone_number ? fullOrder.user.phone_number.toString() : 'N/A'
       );
-
       // 7. Return full order
       return fullOrder;
     } catch (error) {

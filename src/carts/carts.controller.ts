@@ -26,7 +26,7 @@ import { Action } from 'src/roles/enums/action.enum';
 
 @UseGuards(AuthenticationGuard, AuthorizationGuard)
 @ApiBearerAuth('Access-Token')
-@Controller('Carts')
+@Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
@@ -48,6 +48,13 @@ export class CartsController {
     const userId = this.getUserId(request);
     return this.cartsService.findByUser(userId);
   }
+
+  @Permissions([{ resource: Resource.CARTS, actions: [Action.READ] }])
+@Get('view-a-cart-item/:cartItemId')
+findCartItemById(@Param('cartItemId') cartItemId: string) {
+  return this.cartsService.findCartItemById(cartItemId);
+}
+
   
   @Permissions([{resource: Resource.CARTS, actions: [Action.UPDATE] }])
   @Put('/update-a-item/:cartItemId')

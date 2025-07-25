@@ -1,7 +1,6 @@
 /*NestJS imports*/
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 
 /*Service*/
 import { ProductsService } from './products.service';
@@ -22,7 +21,6 @@ import { Category } from '../categories/entities/category.entity';
 @Module({
   imports : [
     TypeOrmModule.forFeature([Product, ProductVariable, Category ]),
-    JwtModule,
     AuthModule, 
   ],
   controllers: [ProductsController],

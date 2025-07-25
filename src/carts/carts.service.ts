@@ -31,7 +31,7 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
   const user = await this.userRepository.findOne({ where: { id: userId } });
   if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-  // 2. Load or init cart with transaction for atomicity
+  // 2. Load or init cart with relations
   let cart = await this.cartsRepository.findOne({
     where: { user: { id: userId } },
     relations: [
@@ -53,9 +53,10 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
       ],
     });
   }
+
   if (!cart) throw new InternalServerErrorException('Failed to initialize cart');
 
-  // Use transaction to ensure consistency
+  // 3. Use transaction for consistency
   await this.cartsRepository.manager.transaction(async (transactionalEntityManager) => {
     for (const { productId, size, quantity } of createCartDto.items) {
       const product = await this.productsRepository.findOne({ where: { id: productId } });
@@ -65,11 +66,11 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
         where: { product: { id: productId }, size },
         relations: ['product'],
       });
+
       if (!variant) {
-        throw new BadRequestException(
-          `Size "${size}" not available for product ${productId}`
-        );
+        throw new BadRequestException(`Size "${size}" not available for product ${productId}`);
       }
+
       if (variant.quantity < quantity) {
         throw new BadRequestException(
           `Only ${variant.quantity} in stock for product ${productId} size ${size}`
@@ -78,31 +79,35 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
 
       const unitPrice = variant.product.discounted_price ?? variant.product.original_price;
 
-      // Check if the item already exists in the cart
+      // Find existing item by productId
       let item = cart.cart_items.find(
-        (ci) => ci.product_variable?.id === variant.id
+        (ci) => ci.product_variable?.product?.id === productId
       );
 
+      if (item && item.product_variable?.size !== size) {
+      await transactionalEntityManager.remove(item);
+      cart.cart_items = cart.cart_items.filter(ci => ci.id !== item!.id);
+      item = undefined;
+    }
+
+
+
       if (item) {
-        // If the item already exists in the cart, update the quantity and price
+        // Same product and same size → update quantity and price
         if (quantity > variant.quantity) {
           throw new BadRequestException(
             `Cannot update to ${quantity}; exceeds stock of ${variant.quantity}`
           );
         }
 
-        // Update the quantity and price at cart (replacing the old quantity with the new one)
-        console.log(`Cart item with product ${productId} and size "${size}" already exists. Updating it.`);
-
-        item.quantity = quantity;  // Set the quantity directly (not adding)
-        item.price_at_cart = unitPrice * quantity;  // Recalculate the price based on the new quantity
-
+        console.log(`Updating product ${productId} (size "${size}") to quantity ${quantity}`);
+        item.quantity = quantity;
+        item.price_at_cart = unitPrice * quantity;
         await transactionalEntityManager.save(item);
       } else {
-        // If the item does not exist in the cart, create a new cart item
-        console.log(`Cart item with product ${productId} and size "${size}" added to the cart.`);
-
-        item = this.cartItemsRepository.create({
+        // New item → create it
+        console.log(`Adding new product ${productId} with size "${size}" to cart.`);
+        const newItem = this.cartItemsRepository.create({
           cart,
           product,
           product_variable: variant,
@@ -111,13 +116,13 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
           price_at_cart: unitPrice * quantity,
         });
 
-        await transactionalEntityManager.save(item);
-        cart.cart_items.push(item);
+        await transactionalEntityManager.save(newItem);
+        cart.cart_items.push(newItem);
       }
     }
   });
 
-  // 3. Return updated cart, with null-check
+  // 4. Return updated cart
   const updatedCart = await this.cartsRepository.findOne({
     where: { id: cart.id },
     relations: [
@@ -127,12 +132,11 @@ async create(userId: string, createCartDto: CreateCartDto): Promise<Cart> {
     ],
   });
 
-  if (!updatedCart) {
-    throw new InternalServerErrorException('Cart not found after update');
-  }
+  if (!updatedCart) throw new InternalServerErrorException('Cart not found after update');
 
   return updatedCart;
 }
+
 
 /*------------- Get all items in cart and update if product or variant changes -------------*/
 async findByUser(userId: string): Promise<Cart> {
@@ -212,6 +216,21 @@ async findByUser(userId: string): Promise<Cart> {
 
   return updatedCart;
 }
+
+/*------------- Get item by id-------------*/
+async findCartItemById(cartItemId: string): Promise<CartItem> {
+  const cartItem = await this.cartItemsRepository.findOne({
+    where: { id: cartItemId },
+    relations: ['product_variable', 'product_variable.product', 'cart'],
+  });
+
+  if (!cartItem) {
+    throw new NotFoundException(`Cart item with ID ${cartItemId} not found`);
+  }
+
+  return cartItem;
+}
+
 
 /*------------- Update cart item in cart -------------*/
 async updateCartItem(userId: string, cartItemId: string, updateCartItemDto: UpdateCartItemDto): Promise<Cart> {

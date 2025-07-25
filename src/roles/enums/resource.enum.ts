@@ -8,5 +8,7 @@ export enum Resource{
     ORDERS = "orders",
     TRANSACTIONS = "transactions",
     ROLES = "roles",
-    PERMISSIONS = "permissions"
+    PERMISSIONS = "permissions",
+    HERO_BANNERS = "hero_banners",
+    PAGE_SECTIONS = "page_sections"
 }

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { CartsService } from './carts.service';
+
+/*Controller*/
 import { CartsController } from './carts.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
+
 import { AuthModule } from 'src/auth/auth.module';
 
 
@@ -18,7 +20,6 @@ import { ProductVariable } from '../products/entities/product_variable.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cart, CartItem, Product, User, ProductVariable]),
-    JwtModule,
     AuthModule
 ],
   controllers: [CartsController],

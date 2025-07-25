@@ -12,6 +12,8 @@ import { Order } from 'src/orders/entities/order.entity';
 import { OrderItem } from 'src/orders/entities/order_item.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Permission } from 'src/roles/entities/permission.entity';
+import { HeroBanner } from 'src/hero_banners/entities/hero_banner.entity';
+import { ProductSectionPage } from 'src/product_section_pages/entities/product_section_page.entity';
 
 export const databaseConfig = async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
   type: 'postgres',
@@ -34,6 +36,8 @@ export const databaseConfig = async (configService: ConfigService): Promise<Type
     OrderItem,
     Role,
     Permission,
+    HeroBanner,
+    ProductSectionPage
   
   ],
 });

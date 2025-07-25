@@ -19,23 +19,37 @@ export class TelegramBotService {
     orderId: string,
     totalAmount: number,
     userName: string,
-    productName: string,
+    productDetails: string,
+    email: string,
+    phoneNumber: string,
   ): Promise<void> {
-    const message = `
-🛒 *New Order Created!*
+const message = `
+*Monostore Sales Receipt*
+------------------------------
+*Customer*
+Username: ${userName}  
+Email: ${email}
+Phone Number: ${phoneNumber}
 
-👤 *User:* \`${userName}\`
-📦 *Product:* \`${productName}\`
-📦 *Order ID:* \`${orderId}\`
-💵 *Total Amount:* \`${totalAmount.toLocaleString()}៛\`
+*Order*
+Order No: ${orderId}
+Date: ${new Date().toLocaleString('en-GB', {
+  timeZone: 'Asia/Phnom_Penh',
+})}
 
-🕒 _Created at:_ ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Phnom_Penh' })}
-    `;
+*Items*
+${productDetails}
+-------------------------------
+🧮 Subtotal: ${Number(totalAmount).toLocaleString()}$
+💵 Paid: ${Number(totalAmount).toLocaleString()}$
+------------------------------
+🙏 *Thank you for shopping!*
+📍 Monostore - Phnom Penh
+`
 
     const url = `https://api.telegram.org/bot${this.telegramConfig.botToken}/sendMessage`;
 
     try {
-      // Use fetch or axios here, example with axios:
       const axios = await import('axios');
       await axios.default.post(url, {
         chat_id: this.telegramConfig.chatId,

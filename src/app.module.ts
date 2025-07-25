@@ -8,6 +8,8 @@ import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
 
 import { JwtModule } from '@nestjs/jwt';
+import { HeroBannersModule } from './hero_banners/hero_banners.module';
+import { ProductSectionPagesModule } from './product_section_pages/product_section_pages.module';
 
 
 @Module({
@@ -34,6 +36,10 @@ import { JwtModule } from '@nestjs/jwt';
 
     // ✅ 3. Your feature modules
     ...appModules,
+
+   
+
+   
   ],
   controllers: [],
   providers: [],

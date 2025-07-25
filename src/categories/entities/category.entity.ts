@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn} from 'typeorm';
 import { Product } from '../../products/entities/product.entity';
 
 @Entity()
@@ -17,4 +17,11 @@ export class Category {
 
   @Column({ nullable: true })
   image: string; // Make sure this property exists
+  
+    @CreateDateColumn()
+    created_at: Date;
+  
+    @UpdateDateColumn()
+    updated_at: Date;
+  
 }

@@ -2,7 +2,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
 
 /*Service*/
 import { RolesService } from './roles.service';
@@ -18,7 +17,6 @@ import { Permission } from './entities/permission.entity'; // Adjust the import 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Role, Permission]), // Assuming Role and Permission are your entities
-    JwtModule,
     AuthModule
   ],
   controllers: [RolesController],
