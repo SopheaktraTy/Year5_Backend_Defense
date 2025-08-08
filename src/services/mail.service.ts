@@ -7,6 +7,7 @@ interface MailApiConfig {
   apiToken: string;
   senderEmail: string;
   senderName: string;
+  apiUrl: string; // ✅ Add this
 }
 
 @Injectable()
@@ -14,12 +15,14 @@ export class MailService {
   private readonly apiToken: string;
   private readonly senderEmail: string;
   private readonly senderName: string;
+  private readonly apiUrl: string; // ✅ Add this
   private readonly logoSvg: string;
 
   constructor(@Inject('MAIL_CONFIG') private readonly mailConfig: MailApiConfig) {
     this.apiToken = this.mailConfig.apiToken;
     this.senderEmail = this.mailConfig.senderEmail;
     this.senderName = this.mailConfig.senderName;
+    this.apiUrl = this.mailConfig.apiUrl; // ✅ Read from config
 
     this.logoSvg = readFileSync(
       join(process.cwd(), 'public', 'logo', 'Logo No Text.svg'),
@@ -31,37 +34,38 @@ export class MailService {
   }
 
   private async sendViaApi(to: string, subject: string, text: string, html?: string) {
-  try {
-    const response = await axios.post(
-      'https://sandbox.api.mailtrap.io/api/send/3907131',
-      {
-        from: {
-          email: this.senderEmail,
-          name: this.senderName,
+    try {
+      const response = await axios.post(
+        this.apiUrl, // ✅ Now uses env variable
+        {
+          from: {
+            email: this.senderEmail,
+            name: this.senderName,
+          },
+          to: [{ email: to }],
+          subject,
+          text,
+          html,
         },
-        to: [{ email: to }],
-        subject,
-        text,
-        html,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.apiToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-    return response.data;
-  } catch (error) {
-    console.error('❌ Mailtrap API Error:', error.response?.data || error.message);
-    throw new Error('Failed to send email');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Mailtrap API Error:', error.response?.data || error.message);
+      throw new Error('Failed to send email');
+    }
   }
-}
 
   async sendMail(to: string, subject: string, text: string, html?: string) {
     return this.sendViaApi(to, subject, text, html);
   }
+
   async sendPasswordResetEmail(to: string, token: string) {
     const resetLink = `http://localhost:3000/reset-password?resetToken=${token}`;
     const subject = 'Password Reset Request';

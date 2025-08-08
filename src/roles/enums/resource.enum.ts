@@ -10,5 +10,5 @@ export enum Resource{
     ROLES = "roles",
     PERMISSIONS = "permissions",
     HERO_BANNERS = "hero_banners",
-    PAGE_SECTIONS = "page_sections"
+    PAGE_SECTIONS = "page_sections",
 }

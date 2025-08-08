@@ -55,4 +55,5 @@ export class User {
   @Column({ type: 'text', nullable: true })
   image: string | null ;
 
+
 }

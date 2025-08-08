@@ -10,7 +10,7 @@ import { TelegramBotService } from '../services/telegrambot.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 /*Entities*/
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order_item.entity';
 import { Cart } from '../carts/entities/cart.entity';
 import { CartItem } from '../carts/entities/cart_item.entity';
@@ -144,7 +144,7 @@ export class OrdersService {
       const productDetails = orderItems
   .map(
     (item, index) =>
-      `${index + 1}. ${item.product.product_name} x${item.quantity} – ${item.price_at_order.toLocaleString()}៛`
+      `item-${index + 1}: ${item.product.product_name} x${item.quantity} – ${item.price_at_order.toLocaleString()}$`
   )
   .join('\n');
 
@@ -197,6 +197,20 @@ export class OrdersService {
       throw new NotFoundException(`Order with id ${orderId} not found`);
     }
     return order;
+  }
+
+  
+  async toggleStatus(orderId: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    // ✅ Toggle between statuses
+    order.status =
+      order.status === OrderStatus.NOT_YET_APPROVED
+        ? OrderStatus.APPROVED
+        : OrderStatus.NOT_YET_APPROVED;
+
+    return this.orderRepository.save(order);
   }
 
 }

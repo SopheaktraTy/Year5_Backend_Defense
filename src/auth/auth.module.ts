@@ -20,7 +20,7 @@ import { Permission } from 'src/roles/entities/permission.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Role, Permission ]), // Import User repository
+    TypeOrmModule.forFeature([User, RefreshToken, ResetToken, Role, Permission]), // Import User repository
     ConfigModule, // ✅ Needed to inject config
     JwtModule.registerAsync({
       imports: [ConfigModule],

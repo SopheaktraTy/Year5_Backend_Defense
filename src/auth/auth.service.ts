@@ -3,6 +3,7 @@ import { SignupDto } from './dto/signup.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginDto } from'./dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 /*Entities*/
 import { User } from './entities/user.entity';
@@ -217,25 +218,29 @@ async refreshTokens(createRefreshTokenDto: RefreshTokenDto) {
 
 /*------------ Change Password with Old Password and New Password ------------*/
 async changePassword(userId: string, oldPassword: string, newPassword: string) {
-  // Find the user by ID
+  // 1️⃣ Find the user
   const user = await this.UserRepository.findOneBy({ id: userId });
   if (!user) {
     throw new NotFoundException('User not found.');
   }
-  // Check if old password and new password are the same
+
+  // 2️⃣ Prevent using the same password
   if (oldPassword === newPassword) {
-    throw new UnauthorizedException('New password must be different from the old password');
+    throw new UnauthorizedException('New password must be different from the old password.');
   }
-  // Compare the old password with the stored hashed password
+
+  // 3️⃣ Check if old password is correct
   const passwordMatch = await bcrypt.compare(oldPassword, user.password);
   if (!passwordMatch) {
-    throw new UnauthorizedException('Invalid password. Please try again.');
+    throw new UnauthorizedException('Invalid password. Please try again. old password is correct');
   }
-  // Hash the new password
+
+  // 4️⃣ Hash and save new password
   const newHashedPassword = await bcrypt.hash(newPassword, 10);
-  // Update user password and save
   user.password = newHashedPassword;
   await this.UserRepository.save(user);
+
+  // ✅ Success response
   return { message: 'Password changed successfully' };
 }
 
@@ -309,7 +314,7 @@ async getProfile(userId: string) {
     gender: user.gender,
     phone_number: user.phone_number,
     date_of_birth: user.date_of_birth,
-    is_verified: user.status,
+    status: user.status,
     created_at: user.created_at,
     updated_at: user.updated_at,
     role_id: user.role,

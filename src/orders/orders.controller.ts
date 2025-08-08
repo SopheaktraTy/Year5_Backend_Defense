@@ -1,5 +1,5 @@
 /*NestJS imports*/
-import { Controller, Post, Get, Delete, Param, Req, Body, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Put, Param, Req, Body, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 
@@ -63,5 +63,12 @@ export class OrdersController {
   @ApiParam({ name: 'orderId', type: 'string' })
   findOne(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.ordersService.findOne(orderId);
+  }
+
+  @Permissions([{ resource: Resource.TRANSACTIONS, actions: [Action.UPDATE] }])
+  @Put('toggle-status/:orderId')
+  @ApiParam({ name: 'orderId', type: 'string' })
+  toggleStatus(@Param('orderId', ParseUUIDPipe) orderId: string) {
+    return this.ordersService.toggleStatus(orderId);
   }
 }

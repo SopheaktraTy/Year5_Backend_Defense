@@ -25,7 +25,7 @@ export class TelegramBotService {
   ): Promise<void> {
 const message = `
 *Monostore Sales Receipt*
-------------------------------
+-------------------------------------------
 *Customer*
 Username: ${userName}  
 Email: ${email}
@@ -39,10 +39,10 @@ Date: ${new Date().toLocaleString('en-GB', {
 
 *Items*
 ${productDetails}
--------------------------------
+-------------------------------------------
 🧮 Subtotal: ${Number(totalAmount).toLocaleString()}$
 💵 Paid: ${Number(totalAmount).toLocaleString()}$
-------------------------------
+-------------------------------------------
 🙏 *Thank you for shopping!*
 📍 Monostore - Phnom Penh
 `

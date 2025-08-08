@@ -37,7 +37,6 @@ export const databaseConfig = async (configService: ConfigService): Promise<Type
     Role,
     Permission,
     HeroBanner,
-    ProductSectionPage
-  
+    ProductSectionPage,
   ],
 });

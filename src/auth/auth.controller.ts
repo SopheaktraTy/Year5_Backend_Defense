@@ -68,10 +68,10 @@ export class AuthController {
   
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @ApiBearerAuth('Access-Token')
-  @Permissions([{resource: Resource.AUTH, actions: [Action.UPDATE] }])
+  @Permissions([{ resource: Resource.AUTH, actions: [Action.UPDATE] }])
   @Put('change-password')
   async changePassword(@Body() ChangePasswordDto: ChangePasswordDto, @Req() req) {
-    return this.authService.changePassword( req.userId, ChangePasswordDto.oldpassword,ChangePasswordDto.newpassword);
+    return this.authService.changePassword( req.user.id, ChangePasswordDto.oldpassword, ChangePasswordDto.newpassword);
   }
   
   @Permissions([{resource: Resource.AUTH, actions: [Action.CREATE] }])
@@ -102,10 +102,6 @@ export class AuthController {
     const userId = req.user?.id;
     return this.authService.updateProfile(userId, updateProfileDto);
   }
-
- 
-
-
 
 
   // User Management Endpoints

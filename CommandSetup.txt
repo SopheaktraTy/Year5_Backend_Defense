@@ -12,9 +12,6 @@
 #install class-transformer (DTO)
 % npm install class-transformer
 
-#Auto generate folder with crud
-% nest g res <foldername>
-
 #Generate Jwt token
 % npm install --save @nestjs/jwt
 
@@ -39,5 +36,18 @@ npm run typeorm migration:run
 #Install Axios
 npm install axios
 
+#Install WebSocket support
+npm install @nestjs/websockets @nestjs/platform-socket.io socket.io
+npm install jsonwebtoken
+
+
+##############################################
 npm run typeorm schema:drop
 npm run typeorm migration:run
+
+#Auto generate folder with crud
+% nest g res <foldername>
+
+#Auto generate folder with websocket
+nest g module chat
+nest g gateway chat

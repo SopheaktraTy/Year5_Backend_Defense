@@ -4,7 +4,7 @@ import { MailService } from './mail.service';
 import { mailConfigFactory } from '../config/mail.config';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule], // ensure ConfigModule is available
   providers: [
     {
       provide: 'MAIL_CONFIG',
