@@ -54,8 +54,7 @@ export class AuthorizationGuard implements CanActivate {
         );
       }
     }
-
-    // ✅ All checks passed
+    // All checks passed
     return true;
   }
 }
